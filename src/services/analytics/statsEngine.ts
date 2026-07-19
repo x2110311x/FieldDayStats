@@ -30,7 +30,7 @@ export function buildBandModeMatrix(qsos: QSO[]): Record<string, BandModeMatrixC
 }
 
 /**
- * Ranks top 20 Band/Mode combinations (e.g., "80M|DIG", "40M|SSB", "20M|SSB").
+ * Ranks top 20 Band/Mode combinations.
  */
 export function getTopBandModeCombinations(qsos: QSO[], limit = 20): { combo: string; count: number; pct: number }[] {
   const counts: Record<string, number> = {};
@@ -57,7 +57,7 @@ export function getTopBandModeCombinations(qsos: QSO[], limit = 20): { combo: st
 }
 
 /**
- * Calculates hourly QSO velocity timeline across event duration.
+ * Calculates hourly QSO velocity timeline formatted in the user's local timezone.
  */
 export function calculateActivityTimeline(qsos: QSO[]): {
   bins: VelocityBin[];
@@ -79,9 +79,9 @@ export function calculateActivityTimeline(qsos: QSO[]): {
 
   for (let t = startHour; t <= endHour; t += 3600000) {
     const dateObj = new Date(t);
-    const hours = String(dateObj.getUTCHours()).padStart(2, '0');
-    const day = dateObj.getUTCDate();
-    const timeLabel = `${hours}:00 (${day}th)`;
+    const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    const dayStr = dateObj.getDate();
+    const timeLabel = `${timeStr} (${dayStr}th)`;
 
     binsMap.set(t, {
       timeLabel,
@@ -280,7 +280,7 @@ export function calculateSectionSweep(qsos: QSO[]) {
   }
 
   const workedCount = workedSet.size;
-  const totalAvailable = 86; // 86 official ARRL/RAC sections (including DX)
+  const totalAvailable = 86;
   const sweepPct = parseFloat(((workedCount / totalAvailable) * 100).toFixed(1));
 
   const topSections = Object.entries(sectionCounts)

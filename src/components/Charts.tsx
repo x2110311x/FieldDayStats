@@ -6,12 +6,13 @@ import {
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
   Filler,
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { Line, Bar, Pie } from 'react-chartjs-2';
 import { QSO, OperatorStats, StationStats } from '../types';
 import {
   BANDS_ORDER,
@@ -26,6 +27,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -44,41 +46,21 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
   const timeline = calculateActivityTimeline(qsos);
   const topCombos = getTopBandModeCombinations(qsos, 20);
 
-  // Chart 1: Activity Timeline Line Chart
+  // 1. Full-Width Simplified Single Line Activity Timeline
   const timelineData = {
     labels: timeline.bins.map((b) => b.timeLabel),
     datasets: [
       {
-        label: 'Total QSOs/hr',
+        label: 'Total QSOs / Hour',
         data: timeline.bins.map((b) => b.qsoCount),
-        borderColor: '#38bdf8',
-        backgroundColor: 'rgba(56, 189, 248, 0.15)',
+        borderColor: '#0284c7',
+        backgroundColor: 'rgba(2, 132, 199, 0.2)',
         fill: true,
-        tension: 0.3,
-        pointRadius: 3,
-        pointHoverRadius: 6,
-      },
-      {
-        label: 'CW',
-        data: timeline.bins.map((b) => b.cwCount),
-        borderColor: '#3b82f6',
-        borderDash: [5, 5],
-        tension: 0.3,
-        pointRadius: 0,
-      },
-      {
-        label: 'Phone (SSB/FM)',
-        data: timeline.bins.map((b) => b.phoneCount),
-        borderColor: '#22c55e',
-        tension: 0.3,
-        pointRadius: 0,
-      },
-      {
-        label: 'Digital (FT8/RTTY)',
-        data: timeline.bins.map((b) => b.digitalCount),
-        borderColor: '#eab308',
-        tension: 0.3,
-        pointRadius: 0,
+        borderWidth: 3,
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: '#38bdf8',
+        pointHoverRadius: 7,
       },
     ],
   };
@@ -87,10 +69,7 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } },
-      },
+      legend: { display: false },
       tooltip: {
         mode: 'index' as const,
         intersect: false,
@@ -114,7 +93,82 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
     },
   };
 
-  // Chart 2: Top 20 Band/Mode Bar Chart
+  // 2. Mode Share Pie Chart Data with Percentages
+  const phoneCount = Object.values(matrix).reduce((sum, r) => sum + r.phone, 0);
+  const cwCount = Object.values(matrix).reduce((sum, r) => sum + r.cw, 0);
+  const digitalCount = Object.values(matrix).reduce((sum, r) => sum + r.digital, 0);
+
+  const phonePct = ((phoneCount / totalQsos) * 100).toFixed(1);
+  const cwPct = ((cwCount / totalQsos) * 100).toFixed(1);
+  const digitalPct = ((digitalCount / totalQsos) * 100).toFixed(1);
+
+  const modePieData = {
+    labels: [
+      `Phone (SSB) - ${phonePct}% (${phoneCount.toLocaleString()} QSOs)`,
+      `CW - ${cwPct}% (${cwCount.toLocaleString()} QSOs)`,
+      `Digital - ${digitalPct}% (${digitalCount.toLocaleString()} QSOs)`,
+    ],
+    datasets: [
+      {
+        data: [phoneCount, cwCount, digitalCount],
+        backgroundColor: ['#22c55e', '#3b82f6', '#eab308'],
+        borderWidth: 2,
+        borderColor: '#0f172a',
+      },
+    ],
+  };
+
+  // 3. Band Share Pie Chart Data with Percentages
+  const activeBands = BANDS_ORDER.filter((b) => (matrix[b]?.total || 0) > 0);
+  const bandPieData = {
+    labels: activeBands.map((b) => {
+      const count = matrix[b].total;
+      const pct = ((count / totalQsos) * 100).toFixed(1);
+      return `${b} - ${pct}% (${count} QSOs)`;
+    }),
+    datasets: [
+      {
+        data: activeBands.map((b) => matrix[b].total),
+        backgroundColor: [
+          '#9333ea',
+          '#3b82f6',
+          '#06b6d4',
+          '#10b981',
+          '#f59e0b',
+          '#ef4444',
+          '#ec4899',
+          '#8b5cf6',
+          '#6366f1',
+          '#f43f5e',
+          '#64748b',
+        ],
+        borderWidth: 2,
+        borderColor: '#0f172a',
+      },
+    ],
+  };
+
+  const pieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+        labels: { color: '#cbd5e1', font: { family: 'Inter', size: 10 } },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const val = context.raw || 0;
+            const pct = ((val / totalQsos) * 100).toFixed(1);
+            return `${context.label.split('-')[0].trim()}: ${val.toLocaleString()} QSOs (${pct}%)`;
+          },
+        },
+      },
+    },
+  };
+
+  // 4. Top 20 Band/Mode Bar Chart
   const comboData = {
     labels: topCombos.map((c) => c.combo),
     datasets: [
@@ -160,7 +214,26 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
 
   return (
     <div className="space-y-6">
-      {/* 1. Band & Mode Matrix Table */}
+      {/* 1. Full-Width Activity Rate Timeline Line Chart */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3 w-full">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Activity Rate Timeline (Local Timezone)</h2>
+            <p className="text-xs text-slate-400">Total contacts per hour across Field Day operating window</p>
+          </div>
+          <div className="text-right">
+            <span className="text-xs text-slate-400">Peak Rate</span>
+            <div className="text-sm font-extrabold text-sky-400 font-mono">
+              {timeline.peakHourlyRate} QSOs/hr
+            </div>
+          </div>
+        </div>
+        <div className="h-64 relative w-full pt-2">
+          <Line data={timelineData} options={timelineOptions} />
+        </div>
+      </div>
+
+      {/* 2. Band & Mode Matrix Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <h2 className="text-base font-bold text-slate-100">Band & Operating Mode Matrix</h2>
@@ -199,15 +272,9 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
             <tfoot className="bg-slate-950 font-bold border-t-2 border-slate-800 font-mono">
               <tr>
                 <td className="p-2.5 text-slate-100 font-sans">TOTALS</td>
-                <td className="p-2.5 text-right text-blue-400">
-                  {Object.values(matrix).reduce((sum, r) => sum + r.cw, 0)}
-                </td>
-                <td className="p-2.5 text-right text-emerald-400">
-                  {Object.values(matrix).reduce((sum, r) => sum + r.phone, 0)}
-                </td>
-                <td className="p-2.5 text-right text-amber-400">
-                  {Object.values(matrix).reduce((sum, r) => sum + r.digital, 0)}
-                </td>
+                <td className="p-2.5 text-right text-blue-400">{cwCount}</td>
+                <td className="p-2.5 text-right text-emerald-400">{phoneCount}</td>
+                <td className="p-2.5 text-right text-amber-400">{digitalCount}</td>
                 <td className="p-2.5 text-right text-sky-400">{qsos.length}</td>
                 <td className="p-2.5 text-right text-slate-100">100.0%</td>
               </tr>
@@ -216,42 +283,37 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
         </div>
       </div>
 
-      {/* 2. Charts Grid */}
+      {/* 3. Visual Analytics Pie Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Activity Timeline Line Chart */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <div>
-              <h2 className="text-base font-bold text-slate-100">Activity Rate Timeline</h2>
-              <p className="text-xs text-slate-400">Hourly QSO velocity across Field Day period</p>
-            </div>
-            <div className="text-right">
-              <span className="text-xs text-slate-400">Peak Rate</span>
-              <div className="text-sm font-extrabold text-sky-400 font-mono">
-                {timeline.peakHourlyRate} QSOs/hr
-              </div>
-            </div>
-          </div>
-          <div className="h-64 relative w-full pt-2">
-            <Line data={timelineData} options={timelineOptions} />
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
+          <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Operating Mode Share</h3>
+          <div className="h-56 relative">
+            <Pie data={modePieData} options={pieOptions} />
           </div>
         </div>
 
-        {/* Top 20 Band/Mode Bar Chart */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <div>
-              <h2 className="text-base font-bold text-slate-100">Top Band/Mode Combinations</h2>
-              <p className="text-xs text-slate-400">Ranked contact totals by band and mode</p>
-            </div>
-          </div>
-          <div className="h-64 relative w-full pt-2">
-            <Bar data={comboData} options={comboOptions} />
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
+          <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Band Distribution Share</h3>
+          <div className="h-56 relative">
+            <Pie data={bandPieData} options={pieOptions} />
           </div>
         </div>
       </div>
 
-      {/* 3. Operator & Station Leaderboard Grids */}
+      {/* 4. Top 20 Band/Mode Bar Chart */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col space-y-3 w-full">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Top Band/Mode Combinations</h2>
+            <p className="text-xs text-slate-400">Ranked contact totals by band and mode</p>
+          </div>
+        </div>
+        <div className="h-64 relative w-full pt-2">
+          <Bar data={comboData} options={comboOptions} />
+        </div>
+      </div>
+
+      {/* 5. Operator & Station Leaderboard Grids */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Operator Leaderboard */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
