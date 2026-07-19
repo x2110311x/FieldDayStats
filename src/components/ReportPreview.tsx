@@ -166,7 +166,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               {config.clubName || 'Amateur Radio Club'} - Field Day Operations Report
             </h1>
             <p className="text-sm font-semibold text-slate-700 mt-1">
-              Callsign: <span className="font-mono text-sky-800 font-bold">{config.clubCall}</span> | Class: <span className="font-bold text-amber-700">{combinedClassCode}</span> | Section: <span className="font-bold text-sky-800">{config.homeSection}</span> | Home Grid: {config.homeGrid}
+              Callsign: <span className="font-mono text-sky-800 font-bold">{config.clubCall}</span> | Exchange: <span className="font-bold text-amber-700">{combinedClassCode} {config.homeSection}</span> | Home Grid: {config.homeGrid}
             </p>
           </div>
           <div className="text-right">
@@ -198,6 +198,25 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             <span className="text-xl font-black text-amber-900 font-mono">{sweep.workedCount}/86</span>
           </div>
         </div>
+
+        {/* Top Operators Highlights */}
+        {operatorStats.length > 0 && (
+          <div className="bg-sky-50 border border-sky-200 rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between border-b border-sky-200 pb-1">
+              <span className="font-bold text-sky-900 uppercase text-xs">Top Operating Contributors</span>
+              <span className="text-[11px] text-sky-800 font-mono">{operatorStats.length} Active Logging Operators</span>
+            </div>
+            <div className="grid grid-cols-5 gap-2 font-mono text-[11px]">
+              {operatorStats.slice(0, 5).map((op, i) => (
+                <div key={op.callsign} className="bg-white p-2 rounded border border-sky-200 flex flex-col justify-between">
+                  <span className="font-bold text-sky-900 font-sans">#{i + 1} {op.callsign}</span>
+                  <span className="text-slate-900 font-extrabold text-xs">{op.totalQsos} QSOs</span>
+                  <span className="text-[10px] text-slate-500 font-sans">{op.pctOfTotal}% of total</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Official Score Calculation Breakdown */}
         <div className="bg-slate-50 border border-slate-300 rounded-lg p-4 space-y-2">
@@ -389,7 +408,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 font-mono">
-              {operatorStats.slice(0, 15).map((op, i) => (
+              {operatorStats.map((op, i) => (
                 <tr key={op.callsign}>
                   <td className="p-2 font-sans font-bold text-slate-500">#{i + 1}</td>
                   <td className="p-2 font-bold font-sans text-amber-900">{op.callsign}</td>

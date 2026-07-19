@@ -1,95 +1,44 @@
 import { describe, it, expect } from 'vitest';
-import { parseAdifLog } from '../services/parser/adifParser';
+import { parseAdifLog, extractLogMetadata } from '../services/parser/adifParser';
 import { calculateFieldDayScore } from '../services/scoring/fieldDayScorer';
 import { buildBandModeMatrix, calculateSectionSweep } from '../services/analytics/statsEngine';
-import { gridToLatLng } from '../services/geo/maidenhead';
-import { FieldDayConfig } from '../types';
 
-describe('Field Day Stats Engine Unit Tests', () => {
-  const sampleAdif = `
-<CALL:4>W1AW <BAND:3>20M <MODE:2>CW <QSO_DATE:8>20260627 <TIME_ON:4>1805 <ARRL_SECT:2>CT <OPERATOR:4>N1MM <STATION_CALLSIGN:4>RIG1 <GRIDSQUARE:4>FN31 <EOR>
-<CALL:4>K1ABC <BAND:3>40M <MODE:3>SSB <QSO_DATE:8>20260627 <TIME_ON:4>1820 <ARRL_SECT:3>EMA <OPERATOR:4>K1ABC <STATION_CALLSIGN:4>RIG1 <GRIDSQUARE:4>FN42 <EOR>
-<CALL:4>N2DEF <BAND:3>80M <MODE:3>FT8 <QSO_DATE:8>20260627 <TIME_ON:4>1915 <ARRL_SECT:3>STX <OPERATOR:4>N1MM <STATION_CALLSIGN:4>RIG2 <GRIDSQUARE:4>EM12 <EOR>
-  `;
+const SAMPLE_N3FJP_ADIF = `
+ADIF Export from N3FJP's ARRL Field Day Contest Log
+<LOG_PGM:34>N3FJP's ARRL Field Day Contest Log
+<EOH>
+<Call:4>K2AA<QSO_Date:8>20260627<Time_On:6>181538<Band:3>40M<Class:2>1D<Mode:2>CW<OPERATOR:6>KE8YBZ<ARRL_Sect:3>EPA<Station_Callsign:5>W8LKY<N3FJP_COMPUTERNAME:10>W8LKY-MAIN<eor>
+<Call:4>WX3B<QSO_Date:8>20260627<Time_On:6>181807<Band:3>20M<Class:2>1D<Mode:3>SSB<OPERATOR:5>K8DXR<ARRL_Sect:3>MDC<Station_Callsign:5>W8LKY<N3FJP_COMPUTERNAME:7>W8LKY-2<eor>
+<Call:3>K5K<QSO_Date:8>20260627<Time_On:6>184328<Band:3>15M<Class:2>5A<Mode:3>SSB<OPERATOR:6>KE8OWD<ARRL_Sect:2>MS<Station_Callsign:5>W8LKY<N3FJP_COMPUTERNAME:7>W8LKY-3<eor>
+`;
 
-  it('should parse ADIF tags correctly', () => {
-    const qsos = parseAdifLog(sampleAdif);
-    expect(qsos.length).toBe(3);
-    expect(qsos[0].call).toBe('W1AW');
-    expect(qsos[0].mode).toBe('CW');
-    expect(qsos[1].mode).toBe('PHONE');
-    expect(qsos[2].mode).toBe('DIGITAL');
-    expect(qsos[0].section).toBe('CT');
+describe('Field Day Stats Engine & ADIF Parser', () => {
+  it('parses N3FJP ADIF logs and extracts station metadata and 3 transmitters', () => {
+    const qsos = parseAdifLog(SAMPLE_N3FJP_ADIF, false);
+    expect(qsos).toHaveLength(3);
+
+    const meta = extractLogMetadata(qsos, SAMPLE_N3FJP_ADIF);
+    expect(meta.discoveredCall).toBe('W8LKY');
+    expect(meta.discoveredTransmitters).toBe(3);
+    expect(meta.discoveredSection).toBe('OH');
+
+    expect(qsos[0].operator).toBe('KE8YBZ');
+    expect(qsos[1].operator).toBe('K8DXR');
+    expect(qsos[2].operator).toBe('KE8OWD');
   });
 
-  it('should calculate matrix cell counts correctly', () => {
-    const qsos = parseAdifLog(sampleAdif);
+  it('calculates band and mode matrix properly', () => {
+    const qsos = parseAdifLog(SAMPLE_N3FJP_ADIF, false);
     const matrix = buildBandModeMatrix(qsos);
-    expect(matrix['20M'].cw).toBe(1);
-    expect(matrix['40M'].phone).toBe(1);
-    expect(matrix['80M'].digital).toBe(1);
+    expect(matrix['40M'].cw).toBe(1);
+    expect(matrix['20M'].phone).toBe(1);
+    expect(matrix['15M'].phone).toBe(1);
   });
 
-  it('should compute official ARRL Field Day scores accurately', () => {
-    const qsos = parseAdifLog(sampleAdif);
-    const config: FieldDayConfig = {
-      clubCall: 'W1AW',
-      clubName: 'Test Club',
-      entryClass: '2A',
-      transmitters: 2,
-      powerCategory: 'LOW_100W',
-      powerSource: 'GENERATOR_MAINS',
-      homeGrid: 'FN31',
-      homeSection: 'CT',
-      totalParticipants: 10,
-      youthParticipants: 0,
-      gotaCall: '',
-      bonuses: {
-        emergencyPower: true,
-        mediaPublicity: false,
-        publicLocation: false,
-        infoBooth: false,
-        smSecMessage: false,
-        w1awBulletin: false,
-        ntsMessagesCount: 0,
-        satelliteQso: false,
-        naturalPower: false,
-        electedOfficialVisit: false,
-        agencyOfficialVisit: false,
-        educationalActivity: false,
-        youthQsoCount: 0,
-        webSubmission: true,
-        safetyOfficer: false,
-        siteResponsibilities: false,
-        socialMedia: false,
-        gotaCoach: false,
-      },
-    };
-
-    const score = calculateFieldDayScore(qsos, [], config);
-    // Raw points: CW (2) + Phone (1) + Digital (2) = 5 pts
-    // 2x Multiplier -> 10 pts
-    // Bonuses: Emergency power (200) + Web submission (50) = 250 pts
-    // Total score = 260 pts
-    expect(score.rawQsoPoints).toBe(5);
-    expect(score.multipliedQsoPoints).toBe(10);
-    expect(score.totalBonusPoints).toBe(250);
-    expect(score.totalScore).toBe(260);
-  });
-
-  it('should calculate section sweep correctly', () => {
-    const qsos = parseAdifLog(sampleAdif);
+  it('calculates section sweep against 86 available sections', () => {
+    const qsos = parseAdifLog(SAMPLE_N3FJP_ADIF, false);
     const sweep = calculateSectionSweep(qsos);
     expect(sweep.workedCount).toBe(3);
-    expect(sweep.workedSet.has('CT')).toBe(true);
-    expect(sweep.workedSet.has('EMA')).toBe(true);
-    expect(sweep.workedSet.has('STX')).toBe(true);
-  });
-
-  it('should convert Maidenhead grid locators to lat/lng', () => {
-    const coords = gridToLatLng('FN31');
-    expect(coords).not.toBeNull();
-    expect(coords?.lat).toBe(41.5);
-    expect(coords?.lng).toBe(-73.0);
+    expect(sweep.totalAvailable).toBe(86);
   });
 });

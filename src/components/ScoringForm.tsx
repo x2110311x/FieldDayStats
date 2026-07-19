@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FieldDayConfig } from '../types';
-import { Award, ChevronDown, ChevronUp, Users, Zap, ExternalLink } from 'lucide-react';
+import { Award, ChevronDown, ChevronUp, Users, Zap, ExternalLink, Search, Loader2 } from 'lucide-react';
+import { lookupCallsign } from '../services/geo/callsignLookup';
 
 interface ScoringFormProps {
   config: FieldDayConfig;
@@ -16,6 +17,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
   participationIndexPct,
 }) => {
   const [showBonuses, setShowBonuses] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const updateConfig = (field: keyof FieldDayConfig, value: any) => {
     onChange({ ...config, [field]: value });
@@ -26,6 +28,23 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
       ...config,
       bonuses: { ...config.bonuses, [field]: value },
     });
+  };
+
+  const handleCallsignLookup = async (call: string) => {
+    if (!call || call.length < 3) return;
+    setIsSearching(true);
+    const info = await lookupCallsign(call);
+    setIsSearching(false);
+
+    if (info) {
+      onChange({
+        ...config,
+        clubCall: info.callsign,
+        clubName: info.name || config.clubName,
+        homeGrid: info.grid || config.homeGrid,
+        homeSection: info.section || config.homeSection,
+      });
+    }
   };
 
   const entryClassUpper = (config.entryClass || 'A').toUpperCase();
@@ -59,13 +78,24 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label className="block text-xs font-semibold text-slate-400 mb-1">Station Callsign</label>
-          <input
-            type="text"
-            value={config.clubCall}
-            onChange={(e) => updateConfig('clubCall', e.target.value.toUpperCase())}
-            placeholder="e.g. W1AW"
-            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-sky-500"
-          />
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              value={config.clubCall}
+              onChange={(e) => updateConfig('clubCall', e.target.value.toUpperCase())}
+              onBlur={(e) => handleCallsignLookup(e.target.value)}
+              placeholder="e.g. W8LKY"
+              className="w-full bg-slate-950 border border-slate-800 rounded-md pl-3 pr-8 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-sky-500"
+            />
+            <button
+              type="button"
+              onClick={() => handleCallsignLookup(config.clubCall)}
+              className="absolute right-2 text-slate-400 hover:text-sky-400 p-0.5 transition"
+              title="Lookup Club Name & Home Grid from Callsign Database"
+            >
+              {isSearching ? <Loader2 className="w-4 h-4 animate-spin text-sky-400" /> : <Search className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
         <div>
@@ -74,7 +104,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             type="text"
             value={config.clubName}
             onChange={(e) => updateConfig('clubName', e.target.value)}
-            placeholder="e.g. Podunk Hollow Radio Club"
+            placeholder="e.g. Lake County Amateur Radio Assn"
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500"
           />
         </div>
@@ -105,7 +135,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             max={20}
             value={config.transmitters || ''}
             onChange={(e) => updateConfig('transmitters', parseInt(e.target.value, 10) || 1)}
-            placeholder="e.g. 2"
+            placeholder="e.g. 3"
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none focus:border-sky-500"
           />
         </div>
@@ -141,7 +171,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             type="text"
             value={config.homeGrid}
             onChange={(e) => updateConfig('homeGrid', e.target.value.toUpperCase())}
-            placeholder="e.g. FN31"
+            placeholder="e.g. EN91"
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none focus:border-sky-500"
           />
         </div>
@@ -152,7 +182,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             type="text"
             value={config.homeSection}
             onChange={(e) => updateConfig('homeSection', e.target.value.toUpperCase())}
-            placeholder="e.g. CT"
+            placeholder="e.g. OH"
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-sky-500"
           />
         </div>

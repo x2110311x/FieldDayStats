@@ -130,7 +130,16 @@ export function parseAdifLog(adifContent: string, isGotaFile = false): QSO[] {
     const timestamp = new Date(`${formattedDate}T${formattedTime}:00Z`).getTime();
 
     const operator = recordData['OPERATOR'] || recordData['STATION_CALLSIGN'] || 'MAIN_OP';
-    const station = recordData['STATION_CALLSIGN'] || recordData['RIG'] || recordData['MY_RIG'] || 'STATION_1';
+
+    // Prioritize N3FJP computer name / station ID if present
+    const station =
+      recordData['N3FJP_STATIONID'] ||
+      recordData['N3FJP_COMPUTERNAME'] ||
+      recordData['STATION_CALLSIGN'] ||
+      recordData['RIG'] ||
+      recordData['MY_RIG'] ||
+      'STATION_1';
+
     const section = extractSection(recordData['ARRL_SECT'], recordData['SRX_STRING'], recordData['STATE']);
     const grid = recordData['GRIDSQUARE'] || recordData['MY_GRIDSQUARE'] || '';
 
@@ -164,7 +173,7 @@ export function parseAdifLog(adifContent: string, isGotaFile = false): QSO[] {
       classSent: recordData['STX_STRING'] || recordData['CLASS_SENT'] || '',
       classRcvd: classRcvd.toUpperCase(),
       grid: grid.toUpperCase(),
-      isGota: isGotaFile || recordData['STATION_CALLSIGN']?.includes('GOTA') || false,
+      isGota: isGotaFile || recordData['STATION_CALLSIGN']?.includes('GOTA') || recordData['N3FJP_COMPUTERNAME']?.includes('GOTA') || false,
       notes: recordData['COMMENT'] || recordData['NOTES'] || ''
     });
   }
@@ -190,23 +199,42 @@ export function extractLogMetadata(qsos: QSO[], adifContent: string): {
   let discoveredTransmitters: number | undefined;
   let hasSatelliteQso = false;
 
-  // Extract from tags in raw ADIF
-  const myCallMatch = /<MY_CALL:\d+>([^<]+)/i.exec(adifContent) || /<STATION_CALLSIGN:\d+>([^<]+)/i.exec(adifContent);
+  // Extract Station Callsign
+  const myCallMatch =
+    /<STATION_CALLSIGN:\d+>([^<]+)/i.exec(adifContent) ||
+    /<MY_CALL:\d+>([^<]+)/i.exec(adifContent) ||
+    /<MY_CALLSIGN:\d+>([^<]+)/i.exec(adifContent);
   if (myCallMatch) discoveredCall = myCallMatch[1].trim().toUpperCase();
 
+  // Extract Home Grid
   const myGridMatch = /<MY_GRIDSQUARE:\d+>([^<]+)/i.exec(adifContent) || /<MY_GRID:\d+>([^<]+)/i.exec(adifContent);
   if (myGridMatch) discoveredGrid = myGridMatch[1].trim().toUpperCase();
 
+  // Extract Home Section
   const mySectMatch = /<MY_ARRL_SECT:\d+>([^<]+)/i.exec(adifContent) || /<MY_SECTION:\d+>([^<]+)/i.exec(adifContent);
-  if (mySectMatch) discoveredSection = mySectMatch[1].trim().toUpperCase();
+  if (mySectMatch) {
+    discoveredSection = mySectMatch[1].trim().toUpperCase();
+  }
 
+  // Count unique physical stations / computer IDs in log
+  const stationSet = new Set<string>();
+  for (const qso of qsos) {
+    if (!qso.isGota && qso.station) {
+      stationSet.add(qso.station);
+    }
+  }
+  if (stationSet.size > 0) {
+    discoveredTransmitters = stationSet.size;
+    discoveredClassLetter = 'A'; // Default to Class A for multi-station club operations
+  }
+
+  // Check Exchange sent (e.g. STX_STRING: "3A OH" or "3A")
   const classSentMatch = /<STX_STRING:\d+>([^<]+)/i.exec(adifContent) || /<CLASS_SENT:\d+>([^<]+)/i.exec(adifContent);
   if (classSentMatch) {
     const exchange = classSentMatch[1].trim().toUpperCase();
     const parts = exchange.split(/\s+/);
     if (parts.length >= 1) {
-      const classPart = parts[0]; // e.g. "3A"
-      const m = /^(\d+)([A-F])$/i.exec(classPart);
+      const m = /^(\d+)([A-F])$/i.exec(parts[0]);
       if (m) {
         discoveredTransmitters = parseInt(m[1], 10);
         discoveredClassLetter = m[2].toUpperCase();
@@ -217,6 +245,18 @@ export function extractLogMetadata(qsos: QSO[], adifContent: string): {
         discoveredSection = parts[1];
       }
     }
+  }
+
+  // If section still not discovered, infer from Callsign (e.g. W8LKY -> Call District 8 -> OH)
+  if (!discoveredSection && discoveredCall) {
+    if (discoveredCall.startsWith('W8') || discoveredCall.startsWith('K8') || discoveredCall.startsWith('N8')) {
+      discoveredSection = 'OH';
+    }
+  }
+
+  // Default Grid for Ohio (W8LKY -> EM79 / EN72)
+  if (!discoveredGrid && (discoveredSection === 'OH' || discoveredCall?.startsWith('W8'))) {
+    discoveredGrid = 'EM79';
   }
 
   // Check for Satellite QSOs

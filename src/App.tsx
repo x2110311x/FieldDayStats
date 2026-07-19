@@ -14,6 +14,7 @@ import { calculateFieldDayScore } from './services/scoring/fieldDayScorer';
 import { getOperatorLeaderboard, getStationBreakdown } from './services/analytics/statsEngine';
 import { SAMPLE_MAIN_ADIF, SAMPLE_GOTA_ADIF } from './services/parser/sampleLogs';
 import { exportElementToPdf } from './services/pdf/reportGenerator';
+import { lookupCallsign } from './services/geo/callsignLookup';
 import { Radio, FileText, BarChart3, Award } from 'lucide-react';
 
 const DEFAULT_CONFIG: FieldDayConfig = {
@@ -94,18 +95,34 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'report' | 'gota-report'>('dashboard');
   const [mapSnapshotUrl, setMapSnapshotUrl] = useState<string>('');
 
-  const handleMainLogLoaded = (content: string, filename: string) => {
+  const handleMainLogLoaded = async (content: string, filename: string) => {
     const parsed = parseAdifLog(content, false);
     setMainQsos(parsed);
     setMainLogName(filename);
 
     // Auto-populate setup metadata from log file
     const meta = extractLogMetadata(parsed, content);
+
+    const callToLookup = meta.discoveredCall || config.clubCall;
+    let lookedUpName: string | undefined;
+    let lookedUpGrid: string | undefined;
+    let lookedUpSection: string | undefined;
+
+    if (callToLookup) {
+      const lookupResult = await lookupCallsign(callToLookup);
+      if (lookupResult) {
+        lookedUpName = lookupResult.name;
+        lookedUpGrid = lookupResult.grid;
+        lookedUpSection = lookupResult.section;
+      }
+    }
+
     setConfig((prev) => ({
       ...prev,
-      clubCall: meta.discoveredCall || prev.clubCall,
-      homeGrid: meta.discoveredGrid || prev.homeGrid,
-      homeSection: meta.discoveredSection || prev.homeSection,
+      clubCall: callToLookup || prev.clubCall,
+      clubName: lookedUpName || prev.clubName,
+      homeGrid: meta.discoveredGrid || lookedUpGrid || prev.homeGrid,
+      homeSection: meta.discoveredSection || lookedUpSection || prev.homeSection,
       entryClass: meta.discoveredClassLetter || prev.entryClass || 'A',
       transmitters: meta.discoveredTransmitters || prev.transmitters || 1,
       bonuses: {
