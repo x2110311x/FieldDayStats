@@ -112,9 +112,25 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
           <clipPath id="canada-top-map-clip">
             <rect x={0} y={0} width={960} height={340} />
           </clipPath>
+
+          {/* Smooth Section Clip Paths for Ontario's 4 ARRL Sections (ONN, ONE, ONS, GH) */}
+          <clipPath id="clip-ONN">
+            <rect x={0} y={0} width={960} height={132} />
+          </clipPath>
+          <clipPath id="clip-ONE">
+            <polygon points="685,132 960,132 960,340 685,340" />
+          </clipPath>
+          <clipPath id="clip-GH">
+            {/* Smooth crescent hugging western Lake Ontario (Hamilton, Toronto, Halton, Peel, York, Durham) */}
+            <polygon points="665,150 685,146 688,154 676,165 660,165 660,156" />
+          </clipPath>
+          <clipPath id="clip-ONS">
+            {/* Southwestern Ontario peninsula */}
+            <polygon points="500,132 685,132 685,340 500,340" />
+          </clipPath>
         </defs>
 
-        {/* Layer 1: Southern Canada Provinces Layer (Clipped to top map region) */}
+        {/* Layer 1: Southern Canada Provinces Layer (Clipped to top map region, with Ontario split into 4 sections) */}
         <g clipPath="url(#canada-top-map-clip)">
           <Geographies geography={CANADA_GEO_URL}>
             {({ geographies }: { geographies: any[] }) =>
@@ -127,14 +143,38 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
                   return null;
                 }
 
-                let worked = false;
-
+                // Subdivide Ontario into its 4 distinct ARRL sections (ONN, ONE, ONS, GH)
                 if (provName === 'Ontario') {
-                  worked = workedSections.has('ONE') || workedSections.has('ONS') || workedSections.has('GH') || workedSections.has('ONN');
-                } else if (sectionCode) {
-                  worked = workedSections.has(sectionCode);
+                  const ontSections = [
+                    { code: 'ONN', clip: 'url(#clip-ONN)' },
+                    { code: 'ONE', clip: 'url(#clip-ONE)' },
+                    { code: 'ONS', clip: 'url(#clip-ONS)' },
+                    { code: 'GH',  clip: 'url(#clip-GH)'  },
+                  ];
+
+                  return (
+                    <g key={`can-${geo.rsmKey}`}>
+                      {ontSections.map(sec => {
+                        const worked = workedSections.has(sec.code);
+                        const fill = worked ? DIVISION_COLORS['RAC'] : unworkedFill;
+
+                        return (
+                          <g key={sec.code} clipPath={sec.clip}>
+                            <Geography
+                              geography={geo}
+                              fill={fill}
+                              stroke={strokeColor}
+                              strokeWidth={0.8}
+                              style={{ default: { outline: 'none' }, hover: { outline: 'none' }, pressed: { outline: 'none' } }}
+                            />
+                          </g>
+                        );
+                      })}
+                    </g>
+                  );
                 }
 
+                const worked = sectionCode ? workedSections.has(sectionCode) : false;
                 const fill = worked ? DIVISION_COLORS['RAC'] : unworkedFill;
 
                 return (
@@ -233,8 +273,16 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
 
           let pos = projection([sec.lng, sec.lat]);
 
-          // Shift Alaska & Hawaii label markers to match shifted insets
-          if (code === 'AK' && pos) {
+          // Precise label positioning for Ontario & Inset sections
+          if (code === 'GH') {
+            pos = [672, 156]; // Centered inside the GH crescent in Toronto/Hamilton
+          } else if (code === 'ONS') {
+            pos = [645, 172]; // Centered in Southwestern Ontario (London/Kitchener)
+          } else if (code === 'ONE') {
+            pos = [715, 138]; // Centered in Eastern Ontario (Ottawa/Kingston)
+          } else if (code === 'ONN') {
+            pos = [610, 105]; // Centered in Northern Ontario (Sudbury/Thunder Bay)
+          } else if (code === 'AK' && pos) {
             pos = [pos[0] - 82, pos[1] + 15];
           } else if (code === 'PAC' && pos) {
             pos = [pos[0] - 70, pos[1] + 15];
