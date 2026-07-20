@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </h1>
             <p className="text-xs text-slate-400">
-              Log Analyzer & Post-Event Club Operations Report Generator
+              Field Day Log Analyzer & Report Generator
             </p>
           </div>
         </div>

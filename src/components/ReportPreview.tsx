@@ -166,7 +166,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 <div className="text-lg font-black text-slate-900 font-mono">{mult}x</div>
               </div>
               <div className="bg-slate-100 border border-slate-300 rounded p-2">
-                <div className="text-[9px] font-bold text-slate-500 uppercase">Section Count</div>
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Sections Contacted</div>
                 <div className="text-lg font-black text-slate-900 font-mono">{sweep.workedCount}/86</div>
               </div>
             </div>
@@ -203,7 +203,6 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   {hasGotaQsos && (
                     <div className="flex justify-between text-[11px]"><span>GOTA Station Bonus:</span> <strong className="text-amber-700">+{score.gotaQsoBonusPoints} pts</strong></div>
                   )}
-                  <div className="flex justify-between text-[11px]"><span>Participation Percentage:</span> <span>{participationIndex}%</span></div>
                   <div className="border-t-2 border-slate-900 pt-1 flex justify-between font-black text-sm text-slate-950">
                     <span>TOTAL ESTIMATED SCORE:</span> <span>{score.totalScore.toLocaleString()} pts</span>
                   </div>
@@ -335,7 +334,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               {/* Operating Mode Pie Chart */}
               <div className="border border-slate-300 rounded p-4 space-y-3">
                 <h3 className="text-xs font-bold text-slate-900 uppercase border-b border-slate-200 pb-2">
-                  Operating Mode Share
+                  Operating Mode Distribution
                 </h3>
                 <div className="flex items-center justify-between gap-8 pt-1">
                   <div
@@ -380,7 +379,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               {/* Band Share Pie Chart */}
               <div className="border border-slate-300 rounded p-4 space-y-3">
                 <h3 className="text-xs font-bold text-slate-900 uppercase border-b border-slate-200 pb-2">
-                  Band Distribution Share
+                  Band Distribution
                 </h3>
                 <div className="flex items-center justify-between gap-8 pt-1">
                   <div
@@ -423,7 +422,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           <div className="space-y-6">
             <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-black text-slate-900 uppercase">ARRL Section Sweep Scorecard (86 Sections)</h2>
+                <h2 className="text-base font-black text-slate-900 uppercase">ARRL Section Scorecard</h2>
                 <p className="text-xs text-slate-600">Worked Sections: <strong>{sweep.workedCount} / 86</strong> ({sweep.sweepPct}%)</p>
               </div>
               <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
@@ -486,7 +485,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>ARRL Section Sweep Scorecard • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
+            <span>ARRL Section Scorecard • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
             <span>Page 3 of {totalReportPages}</span>
           </div>
         </div>
@@ -592,7 +591,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               {/* Station Breakdown (Full-Width) */}
               <div className="border border-slate-300 rounded p-3 space-y-2">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
-                  <h3 className="text-xs font-bold text-slate-900 uppercase">Station & Rig Operations</h3>
+                  <h3 className="text-xs font-bold text-slate-900 uppercase">Station Breakdown</h3>
                   <span className="text-[10px] font-mono text-slate-500">{stationStats.length} Active Stations</span>
                 </div>
                 <div className="overflow-x-auto">
@@ -678,7 +677,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   <div className="text-base font-black text-amber-700 font-mono">+{score.gotaQsoBonusPoints} pts</div>
                 </div>
                 <div>
-                  <div className="text-[9px] font-bold text-amber-900 uppercase">GOTA Section Sweep</div>
+                  <div className="text-[9px] font-bold text-amber-900 uppercase">GOTA Sections</div>
                   <div className="text-base font-black text-slate-900 font-mono">{gotaSweep.workedCount}/86</div>
                 </div>
               </div>
@@ -744,7 +743,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </div>
 
             <div className="border-t border-amber-400 pt-2 text-[10px] text-slate-500 flex justify-between">
-              <span>ARRL Field Day Operations Summary • GOTA Addendum • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
+              <span>ARRL Field Day Operations Summary • GOTA Report • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
               <span>Page 5 of 5</span>
             </div>
           </div>

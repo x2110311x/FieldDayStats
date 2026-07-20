@@ -20,7 +20,7 @@ export const SectionMap: React.FC<SectionMapProps> = ({ qsos }) => {
             <MapPin className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-100">86-Section Sweep Scorecard (2026 Edition)</h2>
+            <h2 className="text-base font-bold text-slate-100">Section Scorecard (2026 Edition)</h2>
             <p className="text-xs text-slate-400">
               ARRL Section completion scorecard
             </p>

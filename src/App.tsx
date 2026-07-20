@@ -187,7 +187,7 @@ export function App() {
 
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 shadow-md">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  86 Section Sweep
+                  Sections contacted
                 </span>
                 <span className="text-xl font-black text-amber-400 font-mono">
                   {score.sectionsWorked} / 86

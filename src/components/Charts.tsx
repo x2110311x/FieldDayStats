@@ -285,14 +285,14 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
       {/* 3. Visual Analytics Pie Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
-          <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Operating Mode Share</h3>
+          <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Operating Mode Distribution</h3>
           <div className="h-56 relative">
             <Pie data={modePieData} options={pieOptions} />
           </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
-          <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Band Distribution Share</h3>
+          <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Band Distribution</h3>
           <div className="h-56 relative">
             <Pie data={bandPieData} options={pieOptions} />
           </div>
