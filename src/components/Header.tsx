@@ -18,13 +18,12 @@ export const Header: React.FC<HeaderProps> = ({
   hasQsos,
   hasGotaQsos,
 }) => {
-  // Show testing controls only in dev mode or when explicitly requested via URL parameter (?test=true)
   const isTestingMode =
     import.meta.env.DEV ||
     (typeof window !== 'undefined' && window.location.search.includes('test=true'));
 
   return (
-    <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3 shadow-lg">
+    <header className="no-print bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3 shadow-lg">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Title */}
         <div className="flex items-center gap-3">
@@ -34,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
               ARRL Field Day Operations & Stats Report
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
                 2026 Edition
               </span>
             </h1>

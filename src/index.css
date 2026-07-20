@@ -4,69 +4,103 @@
 
 @layer base {
   body {
+    @apply bg-slate-950 text-slate-100 antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-  code, pre {
-    font-family: 'JetBrains Mono', monospace;
   }
 }
 
-/* Custom Scrollbars */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #090d16;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1e293b;
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #334155;
 }
 
-/* Leaflet Overrides */
+/* Leaflet dark theme override */
 .leaflet-container {
   background: #090d16 !important;
-  border-radius: 0.75rem;
-}
-.leaflet-popup-content-wrapper {
-  background: #1e293b !important;
-  color: #f8fafc !important;
-  border: 1px solid #475569;
-  border-radius: 0.5rem;
-}
-.leaflet-popup-tip {
-  background: #1e293b !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
-/* Print Styles for A4 Portrait Report */
+.leaflet-popup-content-wrapper {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+}
+
+.leaflet-popup-tip {
+  background: #0f172a !important;
+}
+
+/* Fixed-ratio A4 Printable Page Containers (794px x 1123px = 1:1.414 A4 ratio at 96 DPI) */
+.a4-page {
+  width: 794px !important;
+  height: 1123px !important;
+  max-width: 794px !important;
+  max-height: 1123px !important;
+  margin: 0 auto 30px auto;
+  padding: 40px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
 @media print {
   body {
-    background: white !important;
-    color: black !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
-  .a4-page {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 15mm;
-    margin: 0 auto;
-    background: white !important;
-    color: #0f172a !important;
-    box-shadow: none !important;
-    page-break-after: always;
-  }
-}
 
-@page {
-  size: A4 portrait;
-  margin: 0;
+  header,
+  nav,
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .a4-page {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 15mm !important;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .a4-page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
 }

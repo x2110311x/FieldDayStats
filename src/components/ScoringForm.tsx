@@ -84,7 +84,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
               value={config.clubCall}
               onChange={(e) => updateConfig('clubCall', e.target.value.toUpperCase())}
               onBlur={(e) => handleCallsignLookup(e.target.value)}
-              placeholder="e.g. W8LKY"
+              placeholder="e.g. W1AW"
               className="w-full bg-slate-950 border border-slate-800 rounded-md pl-3 pr-8 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-sky-500"
             />
             <button
@@ -104,7 +104,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             type="text"
             value={config.clubName}
             onChange={(e) => updateConfig('clubName', e.target.value)}
-            placeholder="e.g. Lake County Amateur Radio Assn"
+            placeholder="e.g. ARRL HQ"
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500"
           />
         </div>
@@ -135,7 +135,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             max={20}
             value={config.transmitters || ''}
             onChange={(e) => updateConfig('transmitters', parseInt(e.target.value, 10) || 1)}
-            placeholder="e.g. 3"
+            placeholder="e.g. 2"
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none focus:border-sky-500"
           />
         </div>
@@ -171,7 +171,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             type="text"
             value={config.homeGrid}
             onChange={(e) => updateConfig('homeGrid', e.target.value.toUpperCase())}
-            placeholder="e.g. EN91"
+            placeholder="e.g. FN31"
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none focus:border-sky-500"
           />
         </div>
@@ -182,7 +182,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             type="text"
             value={config.homeSection}
             onChange={(e) => updateConfig('homeSection', e.target.value.toUpperCase())}
-            placeholder="e.g. OH"
+            placeholder="e.g. CT"
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-sky-500"
           />
         </div>
