@@ -194,7 +194,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                     <span>Raw QSO Points:</span> <span>{rawQsoPoints} pts</span>
                   </div>
                   <div className="flex justify-between font-bold text-sky-800">
-                    <span>Multiplied QSO Points ({mult}x):</span> <span>{score.rawQsoPoints} pts</span>
+                    <span>Multiplied QSO Points ({score.powerMultiplier}x):</span> <span>{score.multipliedQsoPoints.toLocaleString()} pts</span>
                   </div>
                 </div>
 
@@ -205,7 +205,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   )}
                   <div className="flex justify-between text-[11px]"><span>Participation Percentage:</span> <span>{participationIndex}%</span></div>
                   <div className="border-t-2 border-slate-900 pt-1 flex justify-between font-black text-sm text-slate-950">
-                    <span>TOTAL CLAIMED SCORE:</span> <span>{score.totalScore.toLocaleString()} pts</span>
+                    <span>TOTAL ESTIMATED SCORE:</span> <span>{score.totalScore.toLocaleString()} pts</span>
                   </div>
                 </div>
               </div>

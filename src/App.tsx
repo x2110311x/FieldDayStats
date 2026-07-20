@@ -181,7 +181,7 @@ export function App() {
                   {mainQsos.length.toLocaleString()}
                 </span>
                 <span className="text-[10px] text-slate-500 block mt-0.5 font-mono">
-                  {score.rawQsoPoints} Multiplied Points
+                  {score.multipliedQsoPoints.toLocaleString()} Multiplied Points ({score.powerMultiplier}x)
                 </span>
               </div>
 
