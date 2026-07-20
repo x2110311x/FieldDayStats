@@ -218,8 +218,8 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3 w-full">
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <div>
-            <h2 className="text-base font-bold text-slate-100">Activity Rate Timeline (Local Timezone)</h2>
-            <p className="text-xs text-slate-400">Total contacts per hour across Field Day operating window</p>
+            <h2 className="text-base font-bold text-slate-100">Activity Graph (Local Timezone)</h2>
+            <p className="text-xs text-slate-400">Total QSOs per hour across Field Day operating window</p>
           </div>
           <div className="text-right">
             <span className="text-xs text-slate-400">Peak Rate</span>
@@ -237,7 +237,6 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <h2 className="text-base font-bold text-slate-100">Band & Operating Mode Matrix</h2>
-          <span className="text-xs text-slate-400 font-mono">{totalQsos} Ingested Contacts</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -352,14 +351,14 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
         {/* Station Breakdown */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h3 className="text-base font-bold text-slate-100">Station & Rig Profiles</h3>
+            <h3 className="text-base font-bold text-slate-100">Station Breakdown</h3>
             <span className="text-xs text-slate-400 font-mono">{stationStats.length} Stations</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-300">
               <thead className="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800 uppercase">
                 <tr>
-                  <th className="p-2">Station Profile</th>
+                  <th className="p-2">Station Name</th>
                   <th className="p-2 text-right">QSOs</th>
                   <th className="p-2 text-right">CW</th>
                   <th className="p-2 text-right">Phone</th>

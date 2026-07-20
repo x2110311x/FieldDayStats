@@ -140,7 +140,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   ARRL FIELD DAY OFFICIAL OPERATIONS REPORT
                 </span>
                 <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none mt-1">
-                  {config.clubName || 'ARRL HQ Staff Radio Club'}
+                  {config.clubName}
                 </h1>
                 <div className="flex items-center gap-3 text-xs font-semibold text-slate-700 mt-2 font-mono">
                   <span>Callsign: <strong className="text-slate-950">{clubCall}</strong></span>
@@ -165,7 +165,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 </div>
               </div>
               <div className="bg-slate-100 border border-slate-300 rounded p-2">
-                <div className="text-[9px] font-bold text-slate-500 uppercase">Main Station QSOs</div>
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Total QSOs</div>
                 <div className="text-lg font-black text-slate-900 font-mono">{mainQsos.length.toLocaleString()}</div>
               </div>
               <div className="bg-slate-100 border border-slate-300 rounded p-2">
@@ -173,7 +173,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 <div className="text-lg font-black text-slate-900 font-mono">{mult}x</div>
               </div>
               <div className="bg-slate-100 border border-slate-300 rounded p-2">
-                <div className="text-[9px] font-bold text-slate-500 uppercase">Section Sweep</div>
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Section Count</div>
                 <div className="text-lg font-black text-slate-900 font-mono">{sweep.workedCount}/86</div>
               </div>
             </div>
@@ -182,7 +182,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             <div className="bg-emerald-50 border border-emerald-200 rounded p-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-700" />
-                <span className="text-xs font-bold text-emerald-950">Active Operator Participation Index</span>
+                <span className="text-s font-bold text-emerald-950">Participation</span>
+                <span className="text-xs font-bold text-emerald-950">Operators / Total Attendees</span>
               </div>
               <div className="text-xs font-mono font-bold text-emerald-800">
                 {participationIndex}% ({uniqueOpCount} operators / {totalParticipants} attendees)
@@ -201,7 +202,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                     <span>Raw QSO Points:</span> <span>{rawQsoPoints} pts</span>
                   </div>
                   <div className="flex justify-between font-bold text-sky-800">
-                    <span>Multiplied QSO Points ({mult}x):</span> <span>{score.qsoPoints} pts</span>
+                    <span>Multiplied QSO Points ({mult}x):</span> <span>{score.rawQsoPoints} pts</span>
                   </div>
                 </div>
 
@@ -210,7 +211,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   {hasGotaQsos && (
                     <div className="flex justify-between text-[11px]"><span>GOTA Station Bonus:</span> <strong className="text-amber-700">+{score.gotaQsoBonusPoints} pts</strong></div>
                   )}
-                  <div className="flex justify-between text-[11px]"><span>Participation Index:</span> <span>{participationIndex}%</span></div>
+                  <div className="flex justify-between text-[11px]"><span>Participation Percentage:</span> <span>{participationIndex}%</span></div>
                   <div className="border-t-2 border-slate-900 pt-1 flex justify-between font-black text-sm text-slate-950">
                     <span>TOTAL CLAIMED SCORE:</span> <span>{score.totalScore.toLocaleString()} pts</span>
                   </div>
@@ -220,7 +221,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
             {/* Full Main Station Band & Mode Matrix Table */}
             <div className="border border-slate-300 rounded p-3 space-y-2">
-              <h3 className="text-xs font-bold text-slate-900 uppercase">Main Station Band & Mode Cross-Tabulation Matrix</h3>
+              <h3 className="text-xs font-bold text-slate-900 uppercase">Band & Operating Mode Matrix</h3>
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] border-b border-slate-300">
                   <tr>
@@ -275,7 +276,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           <div className="space-y-6">
             <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-black text-slate-900 uppercase">Main Station Activity Velocity & Distribution Analytics</h2>
+                <h2 className="text-base font-black text-slate-900 uppercase">Activity & Operating Distribution Analytics</h2>
                 <p className="text-xs text-slate-600">Peak Rate: <strong>{timeline.peakHourlyRate} QSOs/hr</strong> ({timeline.peakWindowLabel})</p>
               </div>
               <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
@@ -283,7 +284,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
             {/* Full-Width Hourly Activity Velocity Timeline Bar Chart */}
             <div className="border border-slate-300 rounded p-4 space-y-3">
-              <h3 className="text-xs font-bold text-slate-900 uppercase">Hourly QSO Activity Velocity Profile</h3>
+              <h3 className="text-xs font-bold text-slate-900 uppercase">Activity Graph</h3>
               <div className="h-44 flex items-end justify-between gap-1 pt-6 border-b border-slate-300 pb-2">
                 {timeline.bins.map((bin, i) => {
                   const maxCount = timeline.peakHourlyRate || 1;
@@ -356,7 +357,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>ARRL Field Day Operations Summary • Activity Velocity & Pie Charts</span>
+            <span>Activity & Distribution Analytics</span>
             <span>Page 2 of {totalReportPages}</span>
           </div>
         </div>
@@ -366,8 +367,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           <div className="space-y-6">
             <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-black text-slate-900 uppercase">ARRL & RAC Section Sweep Scorecard (86 Sections)</h2>
-                <p className="text-xs text-slate-600">Worked Ratio: <strong>{sweep.workedCount} / 86</strong> ({sweep.sweepPct}%)</p>
+                <h2 className="text-base font-black text-slate-900 uppercase">ARRL Section Sweep Scorecard (86 Sections)</h2>
+                <p className="text-xs text-slate-600">Worked Sections: <strong>{sweep.workedCount} / 86</strong> ({sweep.sweepPct}%)</p>
               </div>
               <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
             </div>
@@ -381,9 +382,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 return (
                   <div
                     key={sec.code}
-                    className={`p-1 rounded border ${
-                      isWorked ? 'bg-emerald-100 border-emerald-400 font-bold text-emerald-950' : 'bg-slate-50 border-slate-200 text-slate-400'
-                    }`}
+                    className={`p-1 rounded border ${isWorked ? 'bg-emerald-100 border-emerald-400 font-bold text-emerald-950' : 'bg-slate-50 border-slate-200 text-slate-400'
+                      }`}
                   >
                     <div>{sec.code}</div>
                     <div className="text-[8px]">{isWorked ? `${count} QSO${count > 1 ? 's' : ''}` : '-'}</div>
@@ -429,8 +429,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           <div className="space-y-5">
             <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-black text-slate-900 uppercase">Main Station Geographic Map & Team Profiles</h2>
-                <p className="text-xs text-slate-600">Great-circle propagation vectors and main team breakdown</p>
+                <h2 className="text-base font-black text-slate-900 uppercase">QSO Map & Operator Statistics</h2>
               </div>
               <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
             </div>
@@ -442,7 +441,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               ) : (
                 <div className="text-slate-400 text-xs text-center p-4">
                   <div className="font-mono text-sky-400 mb-1">[Map Snapshot Image Rendered Automatically]</div>
-                  Great-Circle vectors from {config.homeGrid || 'FN31'} across US, RAC, and International DX entities
+                  QSO Map from {config.homeGrid || 'FN31'} across US, Canada, and DX entities
                 </div>
               )}
             </div>
@@ -451,7 +450,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             <div className="grid grid-cols-2 gap-4">
               {/* Operator Leaderboard */}
               <div className="border border-slate-300 rounded p-3 space-y-2">
-                <h3 className="text-xs font-bold text-slate-900 uppercase">Main Station Operators</h3>
+                <h3 className="text-xs font-bold text-slate-900 uppercase">Operators</h3>
                 <table className="w-full text-left text-[10px] font-mono">
                   <thead className="bg-slate-100 text-slate-700 uppercase">
                     <tr>
@@ -476,7 +475,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
               {/* Station Breakdown */}
               <div className="border border-slate-300 rounded p-3 space-y-2">
-                <h3 className="text-xs font-bold text-slate-900 uppercase">Main Station Rigs</h3>
+                <h3 className="text-xs font-bold text-slate-900 uppercase">Stations</h3>
                 <table className="w-full text-left text-[10px] font-mono">
                   <thead className="bg-slate-100 text-slate-700 uppercase">
                     <tr>
@@ -502,7 +501,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>ARRL Field Day Operations Summary • Map & Team Breakdown</span>
+            <span>ARRL Field Day Operations Summary • QSO Map & Operator Statistics</span>
             <span>Page 4 of {totalReportPages}</span>
           </div>
         </div>
@@ -515,7 +514,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 <div>
                   <span className="text-[10px] font-extrabold tracking-widest text-amber-700 uppercase flex items-center gap-1">
                     <Award className="w-3.5 h-3.5 text-amber-600" />
-                    ARRL FIELD DAY GOTA STATION OPERATIONS ADDENDUM (RULE 4.1)
+                    ARRL FIELD DAY GOTA STATION OPERATIONS
                   </span>
                   <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none mt-1">
                     Get On The Air (GOTA) Station Report

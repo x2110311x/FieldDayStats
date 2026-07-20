@@ -69,7 +69,7 @@ export const LogGrid: React.FC<LogGridProps> = ({ qsos }) => {
         <div className="flex items-center gap-2">
           <Database className="w-5 h-5 text-sky-400" />
           <div>
-            <h2 className="text-base font-bold text-slate-100">Ingested Field Day Contacts</h2>
+            <h2 className="text-base font-bold text-slate-100">Full QSO Log</h2>
             <p className="text-xs text-slate-400">
               {qsos.length.toLocaleString()} Total Parsed Records
             </p>
@@ -106,7 +106,7 @@ export const LogGrid: React.FC<LogGridProps> = ({ qsos }) => {
               </th>
               <th className="p-2.5 cursor-pointer hover:text-slate-200" onClick={() => handleSort('call')}>
                 <div className="flex items-center gap-1">
-                  Contacted Call
+                  Call
                   {sortField === 'call' && (sortDirection === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
                 </div>
               </th>

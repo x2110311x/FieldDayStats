@@ -31,13 +31,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-              ARRL Field Day Operations & Stats Report
+              ARRL Field Day Operations Report
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
                 2026 Edition
               </span>
             </h1>
             <p className="text-xs text-slate-400">
-              Client-Side ADIF Log Analyzer & Post-Event Club Operations Report
+              Log Analyzer & Post-Event Club Operations Report Generator
             </p>
           </div>
         </div>

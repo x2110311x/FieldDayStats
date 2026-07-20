@@ -22,14 +22,14 @@ export const SectionMap: React.FC<SectionMapProps> = ({ qsos }) => {
           <div>
             <h2 className="text-base font-bold text-slate-100">86-Section Sweep Scorecard (2026 Edition)</h2>
             <p className="text-xs text-slate-400">
-              Official ARRL & RAC Section completion scorecard and geographic distribution
+              Official ARRL Section completion scorecard and geographic distribution
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 bg-slate-950 px-4 py-2 rounded-lg border border-slate-800">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Sweep Worked</span>
+            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Stations Worked</span>
             <span className="text-base font-extrabold text-emerald-400 font-mono">
               {sweep.workedCount} / {sweep.totalAvailable}
             </span>
@@ -47,7 +47,7 @@ export const SectionMap: React.FC<SectionMapProps> = ({ qsos }) => {
       {/* Top 10 Sections Ranking Bar Chart */}
       <div>
         <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-          Top Contacted Geographic Sections
+          Top Contacted Sections
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono">
           {sweep.topSections.map((sec) => (
@@ -89,11 +89,10 @@ export const SectionMap: React.FC<SectionMapProps> = ({ qsos }) => {
               <div
                 key={sec.code}
                 title={`${sec.code} - ${sec.name} (${sec.division})`}
-                className={`p-1.5 rounded text-center border transition ${
-                  isWorked
-                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold shadow-sm shadow-emerald-500/10'
-                    : 'bg-slate-950/60 border-slate-800/80 text-slate-600 font-normal'
-                }`}
+                className={`p-1.5 rounded text-center border transition ${isWorked
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold shadow-sm shadow-emerald-500/10'
+                  : 'bg-slate-950/60 border-slate-800/80 text-slate-600 font-normal'
+                  }`}
               >
                 <div className="text-xs">{sec.code}</div>
                 <div className="text-[9px] opacity-90 mt-0.5 font-sans">

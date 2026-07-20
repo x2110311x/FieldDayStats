@@ -176,10 +176,7 @@ export const PropagationMap: React.FC<PropagationMapProps> = ({
         <div className="flex items-center gap-2">
           <MapPin className="w-5 h-5 text-sky-400" />
           <div>
-            <h2 className="text-base font-bold text-slate-100">Geodetic Propagation Map</h2>
-            <p className="text-xs text-slate-400">
-              Great-circle propagation paths auto-scaled to fit all contacted stations
-            </p>
+            <h2 className="text-base font-bold text-slate-100">QSO Map</h2>
           </div>
         </div>
       </div>

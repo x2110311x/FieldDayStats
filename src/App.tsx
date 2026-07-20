@@ -124,11 +124,10 @@ export function App() {
         <div className="no-print flex items-center gap-2 border-b border-slate-800 pb-2">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'dashboard'
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition ${activeTab === 'dashboard'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
                 : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
+              }`}
           >
             <BarChart3 className="w-4 h-4" />
             Operations Dashboard
@@ -136,11 +135,10 @@ export function App() {
 
           <button
             onClick={() => setActiveTab('report')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'report'
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition ${activeTab === 'report'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
                 : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
+              }`}
           >
             <FileText className="w-4 h-4" />
             Print Report Preview (A4 Portrait)
@@ -199,7 +197,7 @@ export function App() {
 
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 shadow-md">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Participation Index
+                  Participation
                 </span>
                 <span className="text-xl font-black text-emerald-400 font-mono">
                   {score.participationIndexPct}%

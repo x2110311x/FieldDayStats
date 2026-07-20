@@ -195,7 +195,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-200">Club Attendance & Participation Index</h3>
+            <h3 className="text-sm font-semibold text-slate-200">Club Attendance & Participation</h3>
             <p className="text-xs text-slate-400">
               Enter total physical sign-ins to calculate the active operator participation percentage.
             </p>
@@ -216,7 +216,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-md px-3 py-1.5 text-center">
-            <div className="text-xs text-slate-400">Participation Index</div>
+            <div className="text-xs text-slate-400">Participation</div>
             <div className="text-base font-extrabold text-emerald-400 font-mono">
               {participationIndexPct}%
               <span className="text-[10px] font-normal text-slate-400 block">
@@ -235,7 +235,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
         >
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-400" />
-            Official Bonus Points Checklist for Class {combinedClassCode} (Rule 7.3)
+            Official Bonus Points Checklist for Class {combinedClassCode}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-amber-400 font-semibold">Click to toggle bonus options</span>
@@ -395,7 +395,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
                 />
                 <div>
                   <span className="font-semibold text-slate-200">Educational Activity</span>
-                  <span className="block text-[11px] text-slate-400">100 pts (formal presentation)</span>
+                  <span className="block text-[11px] text-slate-400">100 pts</span>
                 </div>
               </label>
             )}
@@ -485,7 +485,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
               />
               <div>
                 <span className="font-semibold text-slate-200">Social Media Promotion</span>
-                <span className="block text-[11px] text-slate-400">100 pts (#ARRLFD posts)</span>
+                <span className="block text-[11px] text-slate-400">100 pts</span>
               </div>
             </label>
 
