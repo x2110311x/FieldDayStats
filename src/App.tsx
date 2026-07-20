@@ -4,7 +4,9 @@ import { FileUploader } from './components/FileUploader';
 import { ScoringForm } from './components/ScoringForm';
 import { Charts } from './components/Charts';
 import { SectionMap } from './components/SectionMap';
+import { ArrlSectionMap } from './components/ArrlSectionMap';
 import { StaticQsoMap } from './components/StaticQsoMap';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { LogGrid } from './components/LogGrid';
 import { ReportPreview } from './components/ReportPreview';
 import { DiagnosticsModal } from './components/DiagnosticsModal';
@@ -251,26 +253,43 @@ export function App() {
                 {/* Section Scorecard Grid */}
                 <SectionMap qsos={mainQsos} />
 
-                {/* Static SVG Propagation Map */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
-                  <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-                    <div>
-                      <h2 className="text-base font-bold text-slate-100">QSO Map</h2>
-                      <p className="text-xs text-slate-400">
-                        {mainQsos.length} contacts plotted · Home: {config.homeGrid || 'N/A'}
-                      </p>
+                {/* Geographic ARRL Section Map */}
+                <ErrorBoundary fallbackTitle="ARRL Section Map Error">
+                  <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+                      <div>
+                        <h2 className="text-base font-bold text-slate-100">ARRL Section Map</h2>
+                        <p className="text-xs text-slate-400">Sections worked highlighted by division</p>
+                      </div>
+                    </div>
+                    <div className="rounded-lg overflow-hidden border border-slate-800">
+                      <ArrlSectionMap qsos={mainQsos} dark={true} showLabels={true} />
                     </div>
                   </div>
-                  <div className="rounded-lg overflow-hidden border border-slate-800">
-                    <StaticQsoMap
-                      qsos={mainQsos}
-                      homeGrid={config.homeGrid}
-                      homeSection={config.homeSection}
-                      homeCall={config.clubCall}
-                      dark={true}
-                    />
+                </ErrorBoundary>
+
+                {/* Static SVG Propagation Map */}
+                <ErrorBoundary fallbackTitle="QSO Propagation Map Error">
+                  <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+                      <div>
+                        <h2 className="text-base font-bold text-slate-100">QSO Map</h2>
+                        <p className="text-xs text-slate-400">
+                          {mainQsos.length} contacts plotted · Home: {config.homeGrid || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="rounded-lg overflow-hidden border border-slate-800">
+                      <StaticQsoMap
+                        qsos={mainQsos}
+                        homeGrid={config.homeGrid}
+                        homeSection={config.homeSection}
+                        homeCall={config.clubCall}
+                        dark={true}
+                      />
+                    </div>
                   </div>
-                </div>
+                </ErrorBoundary>
 
                 {/* Interactive Main Station Log Table */}
                 <LogGrid

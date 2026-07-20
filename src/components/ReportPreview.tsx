@@ -5,6 +5,8 @@ import { OFFICIAL_ARRL_SECTIONS } from '../services/geo/arrlSections';
 import { BANDS_ORDER, buildBandModeMatrix, calculateSectionSweep, calculateActivityTimeline, getOperatorLeaderboard } from '../services/analytics/statsEngine';
 import { exportElementToPdf } from '../services/pdf/reportGenerator';
 import { StaticQsoMap } from './StaticQsoMap';
+import { ArrlSectionMap } from './ArrlSectionMap';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface ReportPreviewProps {
   config: FieldDayConfig;
@@ -423,6 +425,17 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               })}
             </div>
 
+            {/* Geographic Section Choropleth Map */}
+            <ErrorBoundary fallbackTitle="Section Coverage Map Error">
+              <div className="border border-slate-300 rounded overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200 bg-slate-50">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase">Section Coverage Map</h3>
+                  <span className="text-[10px] font-mono text-slate-500">{sweep.workedCount} of 86 sections worked</span>
+                </div>
+                <ArrlSectionMap qsos={displayQsos} dark={false} showLabels={true} />
+              </div>
+            </ErrorBoundary>
+
             {/* Top 10 Contacted Sections */}
             <div className="border border-slate-300 rounded p-3 space-y-2">
               <h3 className="text-xs font-bold text-slate-900 uppercase">Top 10 Contacted Sections</h3>
@@ -466,21 +479,23 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </div>
 
             {/* Static SVG QSO Map — print-safe, no Leaflet/tiles */}
-            <div className="border border-slate-300 rounded overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200 bg-slate-50">
-                <h3 className="text-xs font-bold text-slate-900 uppercase">QSO Propagation Map</h3>
-                <span className="text-[10px] font-mono text-slate-500">
-                  Home: {config.homeGrid || 'N/A'} · {config.homeSection || 'N/A'} · {displayQsos.length} QSOs
-                </span>
+            <ErrorBoundary fallbackTitle="QSO Propagation Map Error">
+              <div className="border border-slate-300 rounded overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200 bg-slate-50">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase">QSO Propagation Map</h3>
+                  <span className="text-[10px] font-mono text-slate-500">
+                    Home: {config.homeGrid || 'N/A'} · {config.homeSection || 'N/A'} · {displayQsos.length} QSOs
+                  </span>
+                </div>
+                <StaticQsoMap
+                  qsos={displayQsos}
+                  homeGrid={config.homeGrid}
+                  homeSection={config.homeSection}
+                  homeCall={clubCall}
+                  dark={false}
+                />
               </div>
-              <StaticQsoMap
-                qsos={displayQsos}
-                homeGrid={config.homeGrid}
-                homeSection={config.homeSection}
-                homeCall={clubCall}
-                dark={false}
-              />
-            </div>
+            </ErrorBoundary>
 
             {/* Main Station Operator & Rig Breakdown Grids */}
             <div className="grid grid-cols-2 gap-4">

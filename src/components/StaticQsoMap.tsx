@@ -1,17 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Line,
+  Marker,
+  ZoomableGroup,
+} from 'react-simple-maps';
 import { QSO } from '../types';
 import { resolveQsoCoordinates, gridToLatLng } from '../services/geo/maidenhead';
-import { OFFICIAL_ARRL_SECTIONS, ARRL_SECTION_MAP } from '../services/geo/arrlSections';
+import { ARRL_SECTION_MAP } from '../services/geo/arrlSections';
 
-// Viewport: focused on North America + nearby DX. Out-of-bounds contacts are clamped to edge.
-const LON_MIN = -168;
-const LON_MAX = -45;
-const LAT_MIN = 10;
-const LAT_MAX = 72;
-
-const SVG_W = 720;
-const SVG_H = 300;
-const LABEL_PAD = 16; // bottom padding for time labels
+// Natural Earth TopoJSON — world countries
+const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
 const BAND_COLORS: Record<string, string> = {
   '160M': '#9333ea',
@@ -26,25 +27,12 @@ const BAND_COLORS: Record<string, string> = {
   'OTH':  '#64748b',
 };
 
-function project(lat: number, lng: number): [number, number] {
-  // Clamp to viewport
-  const clampedLat = Math.max(LAT_MIN, Math.min(LAT_MAX, lat));
-  const clampedLng = Math.max(LON_MIN, Math.min(LON_MAX, lng));
-  const x = ((clampedLng - LON_MIN) / (LON_MAX - LON_MIN)) * SVG_W;
-  const y = ((LAT_MAX - clampedLat) / (LAT_MAX - LAT_MIN)) * SVG_H;
-  return [x, y];
-}
-
-function isInViewport(lat: number, lng: number): boolean {
-  return lat >= LAT_MIN - 5 && lat <= LAT_MAX + 5 && lng >= LON_MIN - 5 && lng <= LON_MAX + 5;
-}
-
 interface StaticQsoMapProps {
   qsos: QSO[];
   homeGrid?: string;
   homeSection?: string;
   homeCall?: string;
-  /** If true, renders with a dark background suitable for the dashboard. Default = false (light/print). */
+  /** dark=true applies the dark dashboard palette; false = light/print palette */
   dark?: boolean;
 }
 
@@ -55,176 +43,151 @@ export const StaticQsoMap: React.FC<StaticQsoMapProps> = ({
   homeCall,
   dark = false,
 }) => {
-  // ---- Home station coords ----
-  const homeLatLng =
-    gridToLatLng(homeGrid) ||
-    (homeSection && ARRL_SECTION_MAP.has(homeSection.toUpperCase())
-      ? {
-          lat: ARRL_SECTION_MAP.get(homeSection.toUpperCase())!.lat,
-          lng: ARRL_SECTION_MAP.get(homeSection.toUpperCase())!.lng,
-        }
-      : { lat: 41.6, lng: -72.7 }); // Default: CT
+  // ── Home station coords ──────────────────────────────────────────────────────
+  const homeLatLng = useMemo(() => {
+    return (
+      gridToLatLng(homeGrid) ||
+      (homeSection && ARRL_SECTION_MAP.has(homeSection.toUpperCase())
+        ? {
+            lat: ARRL_SECTION_MAP.get(homeSection.toUpperCase())!.lat,
+            lng: ARRL_SECTION_MAP.get(homeSection.toUpperCase())!.lng,
+          }
+        : { lat: 41.6, lng: -72.7 })
+    );
+  }, [homeGrid, homeSection]);
 
-  const [homeX, homeY] = project(homeLatLng.lat, homeLatLng.lng);
-
-  // ---- Aggregate QSO contacts by location ----
-  const contactMap = new Map<
-    string,
-    { lat: number; lng: number; band: string; count: number; isDx: boolean }
-  >();
-
-  for (const qso of qsos) {
-    const coords = resolveQsoCoordinates(qso.grid, qso.section, qso.call);
-    if (!coords) continue;
-
-    const isDx =
-      qso.section?.toUpperCase() === 'DX' ||
-      coords.lng < LON_MIN ||
-      coords.lng > LON_MAX ||
-      coords.lat < LAT_MIN ||
-      coords.lat > LAT_MAX;
-
-    const key = `${coords.lat.toFixed(1)}_${coords.lng.toFixed(1)}`;
-    if (!contactMap.has(key)) {
-      contactMap.set(key, {
-        lat: coords.lat,
-        lng: coords.lng,
-        band: qso.band,
-        count: 1,
-        isDx,
-      });
-    } else {
-      contactMap.get(key)!.count++;
+  // ── Aggregate QSO contacts by location ───────────────────────────────────────
+  const contacts = useMemo(() => {
+    const map = new Map<string, { lat: number; lng: number; band: string; count: number; isDx: boolean }>();
+    for (const qso of qsos) {
+      const coords = resolveQsoCoordinates(qso.grid, qso.section, qso.call);
+      if (!coords) continue;
+      const isDx = qso.section?.toUpperCase() === 'DX';
+      const key = `${coords.lat.toFixed(1)}_${coords.lng.toFixed(1)}`;
+      if (!map.has(key)) {
+        map.set(key, { lat: coords.lat, lng: coords.lng, band: qso.band, count: 1, isDx });
+      } else {
+        map.get(key)!.count++;
+      }
     }
-  }
+    return Array.from(map.values());
+  }, [qsos]);
 
-  const contacts = Array.from(contactMap.values());
+  const activeBands = useMemo(
+    () => [...new Set(contacts.map(c => c.band))].filter(b => BAND_COLORS[b]),
+    [contacts]
+  );
 
-  // ---- Colour palette ----
-  const bg        = dark ? '#0f172a' : '#f8fafc';
-  const gridColor = dark ? '#1e293b' : '#e2e8f0';
-  const textColor = dark ? '#475569' : '#94a3b8';
-  const sectionDot= dark ? '#1e293b' : '#e2e8f0';
-  const sectionStroke= dark ? '#334155' : '#cbd5e1';
-
-  // ---- Lat/Lng reference grid lines ----
-  const gridLines: React.ReactNode[] = [];
-  for (let lat = 20; lat < LAT_MAX; lat += 10) {
-    const [x1, y1] = project(lat, LON_MIN);
-    const [x2]     = project(lat, LON_MAX);
-    gridLines.push(
-      <line key={`lat${lat}`} x1={x1} y1={y1} x2={x2} y2={y1}
-        stroke={gridColor} strokeWidth="0.6" />,
-      <text key={`lat${lat}t`} x={x1 + 2} y={y1 - 2}
-        fontSize="7" fill={textColor} fontFamily="monospace">{lat}°N</text>
-    );
-  }
-  for (let lng = -160; lng < LON_MAX; lng += 20) {
-    const [x1, y1] = project(LAT_MAX, lng);
-    const [, y2]   = project(LAT_MIN, lng);
-    gridLines.push(
-      <line key={`lng${lng}`} x1={x1} y1={y1} x2={x1} y2={y2}
-        stroke={gridColor} strokeWidth="0.6" />,
-      <text key={`lng${lng}t`} x={x1} y={y2 + 8}
-        fontSize="7" fill={textColor} fontFamily="monospace" textAnchor="middle">{lng}°</text>
-    );
-  }
-
-  // ---- Active bands for legend ----
-  const activeBands = [...new Set(contacts.map(c => c.band))].filter(b => BAND_COLORS[b]);
+  // ── Colour palette ───────────────────────────────────────────────────────────
+  const bg         = dark ? '#0f172a' : '#dbeafe';   // ocean colour
+  const landFill   = dark ? '#1e293b' : '#f1f5f9';
+  const landStroke = dark ? '#334155' : '#94a3b8';
+  const textColor  = dark ? '#64748b' : '#64748b';
 
   return (
-    <svg
-      viewBox={`0 0 ${SVG_W} ${SVG_H + LABEL_PAD}`}
-      width="100%"
-      style={{ display: 'block', borderRadius: 4, background: bg }}
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {/* Background */}
-      <rect x={0} y={0} width={SVG_W} height={SVG_H + LABEL_PAD} fill={bg} />
+    <div style={{ position: 'relative', background: bg, borderRadius: 4, overflow: 'hidden' }}>
+      <ComposableMap
+        projection="geoMercator"
+        projectionConfig={{
+          center: [-97, 52],   // centred on North America
+          scale: 500,
+        }}
+        width={800}
+        height={340}
+        style={{ width: '100%', height: 'auto', display: 'block' }}
+      >
+        {/* Geographic backdrop */}
+        <Geographies geography={GEO_URL}>
+          {({ geographies }: { geographies: any[] }) =>
+            geographies.map((geo: any) => (
+              <Geography
+                key={geo.rsmKey}
+                geography={geo}
+                fill={landFill}
+                stroke={landStroke}
+                strokeWidth={0.5}
+                style={{ default: { outline: 'none' }, hover: { outline: 'none' }, pressed: { outline: 'none' } }}
+              />
+            ))
+          }
+        </Geographies>
 
-      {/* Lat/lng grid */}
-      {gridLines}
+        {/* Great-circle lines (home → each US/VE contact) */}
+        {contacts.filter(c => !c.isDx).map((c, i) => {
+          const color = BAND_COLORS[c.band] || '#38bdf8';
+          return (
+            <Line
+              key={`line-${i}`}
+              from={[homeLatLng.lng, homeLatLng.lat]}
+              to={[c.lng, c.lat]}
+              stroke={color}
+              strokeWidth={0.8}
+              strokeOpacity={dark ? 0.4 : 0.5}
+            />
+          );
+        })}
 
-      {/* ARRL section centroids as geographic reference — gives the "shape" of North America */}
-      {OFFICIAL_ARRL_SECTIONS.map((sec) => {
-        if (!isInViewport(sec.lat, sec.lng)) return null;
-        const [x, y] = project(sec.lat, sec.lng);
-        return (
-          <circle key={`sec-${sec.code}`} cx={x} cy={y} r={4}
-            fill={sectionDot} stroke={sectionStroke} strokeWidth="0.5" opacity="0.7" />
-        );
-      })}
+        {/* DX lines — dashed amber */}
+        {contacts.filter(c => c.isDx).map((c, i) => (
+          <Line
+            key={`dxline-${i}`}
+            from={[homeLatLng.lng, homeLatLng.lat]}
+            to={[c.lng, c.lat]}
+            stroke="#f59e0b"
+            strokeWidth={1.2}
+            strokeOpacity={0.7}
+            strokeDasharray="5,3"
+          />
+        ))}
 
-      {/* Great-circle lines from home to in-viewport contacts */}
-      {contacts.filter(c => !c.isDx && isInViewport(c.lat, c.lng)).map((c, i) => {
-        const [cx, cy] = project(c.lat, c.lng);
-        const color = BAND_COLORS[c.band] || '#38bdf8';
-        return (
-          <line key={`line-${i}`}
-            x1={homeX} y1={homeY} x2={cx} y2={cy}
-            stroke={color} strokeWidth="0.8" opacity={dark ? 0.35 : 0.4} />
-        );
-      })}
+        {/* Contact dots */}
+        {contacts.map((c, i) => {
+          const color = c.isDx ? '#f59e0b' : (BAND_COLORS[c.band] || '#38bdf8');
+          const r = Math.min(6, 3 + Math.log2(c.count + 1) * 0.8);
+          return (
+            <Marker key={`dot-${i}`} coordinates={[c.lng, c.lat]}>
+              <circle r={r} fill={color} stroke="white" strokeWidth={0.8} opacity={0.9} />
+            </Marker>
+          );
+        })}
 
-      {/* DX lines — dashed amber */}
-      {contacts.filter(c => c.isDx && isInViewport(c.lat, c.lng)).map((c, i) => {
-        const [cx, cy] = project(c.lat, c.lng);
-        return (
-          <line key={`dxline-${i}`}
-            x1={homeX} y1={homeY} x2={cx} y2={cy}
-            stroke="#f59e0b" strokeWidth="1.2" opacity="0.7" strokeDasharray="4,3" />
-        );
-      })}
+        {/* Home station marker */}
+        <Marker coordinates={[homeLatLng.lng, homeLatLng.lat]}>
+          <circle r={10} fill="none" stroke="#38bdf8" strokeWidth={1.5} opacity={0.5} />
+          <circle r={5} fill="#38bdf8" stroke="white" strokeWidth={1.5} />
+          {homeCall && (
+            <text
+              y={-14}
+              textAnchor="middle"
+              fontSize={9}
+              fontWeight="bold"
+              fontFamily="monospace"
+              fill={dark ? '#38bdf8' : '#0f172a'}
+            >
+              {homeCall}
+            </text>
+          )}
+        </Marker>
+      </ComposableMap>
 
-      {/* Contact dots */}
-      {contacts.filter(c => isInViewport(c.lat, c.lng)).map((c, i) => {
-        const [cx, cy] = project(c.lat, c.lng);
-        const color = c.isDx ? '#f59e0b' : (BAND_COLORS[c.band] || '#38bdf8');
-        const r = Math.min(5, 2.5 + Math.log2(c.count + 1) * 0.8);
-        return (
-          <circle key={`dot-${i}`} cx={cx} cy={cy} r={r}
-            fill={color} stroke="white" strokeWidth="0.8" opacity="0.9" />
-        );
-      })}
-
-      {/* Home station marker */}
-      <circle cx={homeX} cy={homeY} r={9} fill="none" stroke="#38bdf8" strokeWidth="1.5" opacity="0.5" />
-      <circle cx={homeX} cy={homeY} r={5} fill="#38bdf8" stroke="white" strokeWidth="1.5" />
-      {homeCall && (
-        <text x={homeX} y={homeY - 12}
-          textAnchor="middle" fontSize="8" fill={dark ? '#38bdf8' : '#0f172a'}
-          fontWeight="bold" fontFamily="monospace">
-          {homeCall}
-        </text>
-      )}
-
-      {/* Legend */}
-      {activeBands.slice(0, 8).map((band, i) => {
-        const color = BAND_COLORS[band];
-        const lx = 8 + i * 62;
-        const ly = SVG_H + 10;
-        if (lx + 55 > SVG_W) return null;
-        return (
-          <g key={`leg-${band}`}>
-            <rect x={lx} y={ly - 6} width={8} height={8} fill={color} rx="1" />
-            <text x={lx + 10} y={ly + 1} fontSize="7" fill={textColor} fontFamily="monospace">{band}</text>
-          </g>
-        );
-      })}
-      {/* DX legend entry */}
-      {contacts.some(c => c.isDx) && (() => {
-        const i = Math.min(activeBands.length, 7);
-        const lx = 8 + i * 62;
-        const ly = SVG_H + 10;
-        if (lx + 55 > SVG_W) return null;
-        return (
-          <g key="leg-dx">
-            <rect x={lx} y={ly - 6} width={8} height={8} fill="#f59e0b" rx="1" />
-            <text x={lx + 10} y={ly + 1} fontSize="7" fill={textColor} fontFamily="monospace">DX</text>
-          </g>
-        );
-      })()}
-    </svg>
+      {/* Band legend overlay */}
+      <div style={{
+        position: 'absolute', bottom: 4, left: 6,
+        display: 'flex', gap: 8, flexWrap: 'wrap',
+      }}>
+        {activeBands.slice(0, 10).map(band => (
+          <span key={band} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, fontFamily: 'monospace', color: textColor }}>
+            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: BAND_COLORS[band] }} />
+            {band}
+          </span>
+        ))}
+        {contacts.some(c => c.isDx) && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, fontFamily: 'monospace', color: textColor }}>
+            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#f59e0b' }} />
+            DX
+          </span>
+        )}
+      </div>
+    </div>
   );
 };
