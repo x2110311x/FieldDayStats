@@ -1,9 +1,8 @@
 import React from 'react';
 import { FieldDayConfig, QSO, OperatorStats, StationStats, ScoreBreakdown } from '../types';
-import { Printer, Download, Users, AlertCircle, Award } from 'lucide-react';
+import { Printer, Users, AlertCircle, Award } from 'lucide-react';
 import { OFFICIAL_ARRL_SECTIONS } from '../services/geo/arrlSections';
 import { BANDS_ORDER, buildBandModeMatrix, calculateSectionSweep, calculateActivityTimeline, getOperatorLeaderboard } from '../services/analytics/statsEngine';
-import { exportElementToPdf } from '../services/pdf/reportGenerator';
 import { StaticQsoMap } from './StaticQsoMap';
 import { ArrlSectionMap } from './ArrlSectionMap';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -66,10 +65,6 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   const gotaOperators = getOperatorLeaderboard(gotaQsos);
   const totalReportPages = hasGotaQsos ? 5 : 4;
 
-  const handleDownload = () => {
-    exportElementToPdf(elementId, pdfFilename);
-  };
-
   // Helper for Conic Gradient Pie Chart
   const phoneEnd = phonePct;
   const cwEnd = phoneEnd + cwPct;
@@ -107,25 +102,21 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
       {/* Export Toolbar */}
       <div className="no-print bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-bold text-slate-100">Field Day Operations Report</h2>
-          <p className="text-xs text-slate-400">
-            Click <strong className="text-sky-400">Print / Save as PDF</strong> for browser print, or <strong className="text-sky-400">Download PDF File</strong> for direct file download.
+          <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+            <Printer className="w-4 h-4 text-sky-400" />
+            Field Day Operations Report
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">
+            Click <strong className="text-sky-400 font-semibold">Print / Save as PDF</strong> to launch your browser print window. Select <strong className="text-sky-400 font-mono">"Save as PDF"</strong> as your printer destination to download your vector PDF copy.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 shadow transition"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-extrabold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-600/20 transition hover:scale-105 active:scale-95 cursor-pointer"
           >
-            <Printer className="w-4 h-4 text-sky-400" />
+            <Printer className="w-4 h-4" />
             Print / Save as PDF
-          </button>
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/20 transition"
-          >
-            <Download className="w-4 h-4" />
-            Download PDF File
           </button>
         </div>
       </div>
@@ -267,7 +258,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
           {/* Page Footer */}
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>ARRL Field Day Operations Summary • Class {combinedClass}</span>
+            <span>ARRL Field Day Operations Summary • Class {combinedClass} • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
             <span>Page 1 of {totalReportPages}</span>
           </div>
         </div>
@@ -390,7 +381,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>Activity & Distribution Analytics</span>
+            <span>Activity & Distribution Analytics • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
             <span>Page 2 of {totalReportPages}</span>
           </div>
         </div>
@@ -463,7 +454,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>ARRL Field Day Operations Summary • Section Sweep</span>
+            <span>ARRL Section Sweep Scorecard • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
             <span>Page 3 of {totalReportPages}</span>
           </div>
         </div>
@@ -510,50 +501,50 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[10px] font-mono">
+                  <table className="w-full text-left text-[10px] font-mono border-collapse">
                     <thead className="bg-slate-100 text-slate-700 uppercase border-b border-slate-300">
                       <tr>
-                        <th className="p-1.5 font-bold text-slate-900">Operator Call</th>
-                        <th className="p-1.5 text-right font-bold text-slate-900">QSOs</th>
-                        <th className="p-1.5 text-right text-slate-700">Active Hours</th>
-                        <th className="p-1.5 text-right text-slate-700 pr-6">% Share</th>
-                        <th className="p-1.5 text-left text-slate-700 pl-3">Bands Worked</th>
-                        <th className="p-1.5 text-left text-slate-700">Modes Used</th>
+                        <th className="p-1.5 font-bold text-slate-900 w-[110px]">Operator Call</th>
+                        <th className="p-1.5 text-right font-bold text-slate-900 w-[55px]">QSOs</th>
+                        <th className="p-1.5 text-right text-slate-700 w-[75px]">Active Hours</th>
+                        <th className="p-1.5 text-right text-slate-700 w-[65px] pr-4">% Share</th>
+                        <th className="p-1.5 text-left text-slate-700 pl-2">Bands Worked</th>
+                        <th className="p-1.5 text-left text-slate-700 w-[160px]">Modes Used</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                       {operatorStats.slice(0, 10).map((op) => (
                         <tr key={op.callsign} className="hover:bg-slate-50">
-                          <td className="p-1.5 font-bold text-sky-800">{op.callsign}</td>
+                          <td className="p-1.5 font-bold text-sky-800 whitespace-nowrap">{op.callsign}</td>
                           <td className="p-1.5 text-right font-bold text-slate-900">{op.totalQsos}</td>
                           <td className="p-1.5 text-right text-slate-600">{op.activeHours} hrs</td>
-                          <td className="p-1.5 text-right text-slate-600 pr-6">{op.pctOfTotal}%</td>
-                          <td className="p-1.5 text-left pl-3">
-                            <div className="flex items-center gap-1 flex-wrap">
+                          <td className="p-1.5 text-right text-slate-600 pr-4">{op.pctOfTotal}%</td>
+                          <td className="p-1.5 text-left pl-2">
+                            <div className="block leading-normal">
                               {op.workedBands.map((b) => {
                                 const bCount = op.bandCounts ? op.bandCounts[b] : undefined;
                                 return (
-                                  <span key={b} className="px-1.5 py-0.5 text-[8.5px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300">
+                                  <span key={b} className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8.5px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300 whitespace-nowrap">
                                     {b}{bCount !== undefined ? ` (${bCount})` : ''}
                                   </span>
                                 );
                               })}
                             </div>
                           </td>
-                          <td className="p-1 text-left">
-                            <div className="flex items-center gap-1 flex-wrap">
+                          <td className="p-1.5 text-left">
+                            <div className="block leading-normal">
                               {op.cwQsos > 0 && (
-                                <span className="px-1 py-0.2 text-[8px] font-bold rounded bg-blue-100 text-blue-900 border border-blue-300">
+                                <span className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8px] font-bold rounded bg-blue-100 text-blue-900 border border-blue-300 whitespace-nowrap">
                                   CW ({op.cwQsos})
                                 </span>
                               )}
                               {op.phoneQsos > 0 && (
-                                <span className="px-1 py-0.2 text-[8px] font-bold rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                <span className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8px] font-bold rounded bg-emerald-100 text-emerald-900 border border-emerald-300 whitespace-nowrap">
                                   SSB ({op.phoneQsos})
                                 </span>
                               )}
                               {op.digitalQsos > 0 && (
-                                <span className="px-1 py-0.2 text-[8px] font-bold rounded bg-amber-100 text-amber-900 border border-amber-300">
+                                <span className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8px] font-bold rounded bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
                                   DIG ({op.digitalQsos})
                                 </span>
                               )}
@@ -573,33 +564,33 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   <span className="text-[10px] font-mono text-slate-500">{stationStats.length} Active Stations</span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[10px] font-mono">
+                  <table className="w-full text-left text-[10px] font-mono border-collapse">
                     <thead className="bg-slate-100 text-slate-700 uppercase border-b border-slate-300">
                       <tr>
-                        <th className="p-1.5 font-bold text-slate-900">Station Name</th>
-                        <th className="p-1.5 text-right font-bold text-slate-900">Total QSOs</th>
-                        <th className="p-1.5 text-right text-blue-800">CW QSOs</th>
-                        <th className="p-1.5 text-right text-emerald-800">Phone (SSB)</th>
-                        <th className="p-1.5 text-right text-amber-800">Digital</th>
-                        <th className="p-1.5 text-right text-slate-700 pr-6">% Share</th>
-                        <th className="p-1.5 text-left text-slate-700 pl-3">Bands Worked</th>
+                        <th className="p-1.5 font-bold text-slate-900 w-[110px]">Station Name</th>
+                        <th className="p-1.5 text-right font-bold text-slate-900 w-[65px]">Total QSOs</th>
+                        <th className="p-1.5 text-right text-blue-800 w-[55px]">CW QSOs</th>
+                        <th className="p-1.5 text-right text-emerald-800 w-[75px]">Phone (SSB)</th>
+                        <th className="p-1.5 text-right text-amber-800 w-[55px]">Digital</th>
+                        <th className="p-1.5 text-right text-slate-700 w-[65px] pr-4">% Share</th>
+                        <th className="p-1.5 text-left text-slate-700 pl-2">Bands Worked</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                       {stationStats.map((st) => (
                         <tr key={st.name} className="hover:bg-slate-50">
-                          <td className="p-1.5 font-bold text-emerald-800">{st.name}</td>
+                          <td className="p-1.5 font-bold text-emerald-800 whitespace-nowrap">{st.name}</td>
                           <td className="p-1.5 text-right font-bold text-slate-900">{st.totalQsos}</td>
                           <td className="p-1.5 text-right text-blue-900">{st.cwQsos}</td>
                           <td className="p-1.5 text-right text-emerald-900">{st.phoneQsos}</td>
                           <td className="p-1.5 text-right text-amber-900">{st.digitalQsos}</td>
-                          <td className="p-1.5 text-right text-slate-600 pr-6">{st.pctOfTotal}%</td>
-                          <td className="p-1.5 text-left pl-3">
-                            <div className="flex items-center gap-1 flex-wrap">
+                          <td className="p-1.5 text-right text-slate-600 pr-4">{st.pctOfTotal}%</td>
+                          <td className="p-1.5 text-left pl-2">
+                            <div className="block leading-normal">
                               {st.workedBands?.map((b) => {
                                 const bCount = st.bandCounts ? st.bandCounts[b] : undefined;
                                 return (
-                                  <span key={b} className="px-1.5 py-0.5 text-[8.5px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300">
+                                  <span key={b} className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8.5px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300 whitespace-nowrap">
                                     {b}{bCount !== undefined ? ` (${bCount})` : ''}
                                   </span>
                                 );
@@ -616,7 +607,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>ARRL Field Day Operations Summary • QSO Map & Operator Statistics</span>
+            <span>ARRL Field Day Operations Summary • QSO Map & Operator Statistics • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
             <span>Page 4 of {totalReportPages}</span>
           </div>
         </div>
@@ -721,7 +712,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </div>
 
             <div className="border-t border-amber-400 pt-2 text-[10px] text-slate-500 flex justify-between">
-              <span>ARRL Field Day Operations Summary • GOTA Addendum</span>
+              <span>ARRL Field Day Operations Summary • GOTA Addendum • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
               <span>Page 5 of 5</span>
             </div>
           </div>

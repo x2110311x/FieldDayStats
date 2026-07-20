@@ -10,6 +10,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { LogGrid } from './components/LogGrid';
 import { ReportPreview } from './components/ReportPreview';
 import { DiagnosticsModal } from './components/DiagnosticsModal';
+import { Footer } from './components/Footer';
 import { FieldDayConfig, QSO } from './types';
 import { DEFAULT_CONFIG, SAMPLE_CONFIG, SAMPLE_MAIN_ADIF, SAMPLE_GOTA_ADIF } from './constants';
 import { parseAdifLog, extractLogMetadata } from './services/parser/adifParser';
@@ -142,7 +143,7 @@ export function App() {
               }`}
           >
             <FileText className="w-4 h-4" />
-            Print Report Preview (A4 Portrait)
+            Print Report Preview
           </button>
         </div>
 
@@ -328,6 +329,9 @@ export function App() {
           />
         )}
       </main>
+
+      {/* Global Application Footer */}
+      <Footer />
 
       {/* Diagnostics Modal (Dev Only) */}
       <DiagnosticsModal
