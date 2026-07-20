@@ -372,7 +372,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   style={{ background: bandConicGradient }}
                 />
                 <div className="w-full space-y-1 text-xs font-mono pt-2 border-t border-slate-200">
-                  {activeBands.slice(0, 4).map((band, idx) => {
+                  {activeBands.map((band, idx) => {
                     const count = matrix[band].total;
                     const pct = ((count / totalQsos) * 100).toFixed(1);
                     const color = BAND_PIE_COLORS[idx % BAND_PIE_COLORS.length];
