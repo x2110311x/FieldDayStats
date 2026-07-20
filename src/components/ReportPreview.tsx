@@ -330,51 +330,83 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               })()}
             </div>
 
-            {/* Side-by-Side Mode & Band Pie Charts */}
-            <div className="grid grid-cols-2 gap-6">
+            {/* Stacked Mode & Band Pie Charts (Vertical Stack with Right-Side Legends) */}
+            <div className="space-y-5">
               {/* Operating Mode Pie Chart */}
-              <div className="border border-slate-300 rounded p-4 space-y-3 flex flex-col items-center">
-                <h3 className="text-xs font-bold text-slate-900 uppercase text-center">Operating Mode Share</h3>
-                <div
-                  className="w-36 h-36 rounded-full shadow-inner border-2 border-slate-200 my-2"
-                  style={{ background: modeConicGradient }}
-                />
-                <div className="w-full space-y-1 text-xs font-mono pt-2 border-t border-slate-200">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Phone (SSB)</span>
-                    <span><strong>{phonePct}%</strong> ({phoneCount})</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> CW</span>
-                    <span><strong>{cwPct}%</strong> ({cwCount})</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Digital</span>
-                    <span><strong>{digitalPct}%</strong> ({digitalCount})</span>
+              <div className="border border-slate-300 rounded p-4 space-y-3">
+                <h3 className="text-xs font-bold text-slate-900 uppercase border-b border-slate-200 pb-2">
+                  Operating Mode Share
+                </h3>
+                <div className="flex items-center justify-between gap-8 pt-1">
+                  <div
+                    className="w-48 h-48 rounded-full shadow-inner border-2 border-slate-300 shrink-0"
+                    style={{ background: modeConicGradient }}
+                  />
+                  <div className="flex-1 space-y-2.5 font-mono border-l border-slate-200 pl-6">
+                    <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100">
+                      <span className="flex items-center gap-2 font-semibold">
+                        <span className="w-3.5 h-3.5 rounded bg-emerald-500 shadow-sm" />
+                        Phone (SSB)
+                      </span>
+                      <span className="text-slate-900">
+                        <strong className="text-sm font-bold text-emerald-700">{phonePct}%</strong>{' '}
+                        <span className="text-slate-500">({phoneCount} QSOs)</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100">
+                      <span className="flex items-center gap-2 font-semibold">
+                        <span className="w-3.5 h-3.5 rounded bg-blue-500 shadow-sm" />
+                        CW (Morse Code)
+                      </span>
+                      <span className="text-slate-900">
+                        <strong className="text-sm font-bold text-blue-700">{cwPct}%</strong>{' '}
+                        <span className="text-slate-500">({cwCount} QSOs)</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100">
+                      <span className="flex items-center gap-2 font-semibold">
+                        <span className="w-3.5 h-3.5 rounded bg-amber-500 shadow-sm" />
+                        Digital (FT8 / RTTY)
+                      </span>
+                      <span className="text-slate-900">
+                        <strong className="text-sm font-bold text-amber-700">{digitalPct}%</strong>{' '}
+                        <span className="text-slate-500">({digitalCount} QSOs)</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Band Share Pie Chart */}
-              <div className="border border-slate-300 rounded p-4 space-y-3 flex flex-col items-center">
-                <h3 className="text-xs font-bold text-slate-900 uppercase text-center">Band Distribution Share</h3>
-                <div
-                  className="w-36 h-36 rounded-full shadow-inner border-2 border-slate-200 my-2"
-                  style={{ background: bandConicGradient }}
-                />
-                <div className="w-full space-y-1 text-xs font-mono pt-2 border-t border-slate-200">
-                  {activeBands.map((band, idx) => {
-                    const count = matrix[band].total;
-                    const pct = ((count / totalQsos) * 100).toFixed(1);
-                    const color = BAND_PIE_COLORS[idx % BAND_PIE_COLORS.length];
+              <div className="border border-slate-300 rounded p-4 space-y-3">
+                <h3 className="text-xs font-bold text-slate-900 uppercase border-b border-slate-200 pb-2">
+                  Band Distribution Share
+                </h3>
+                <div className="flex items-center justify-between gap-8 pt-1">
+                  <div
+                    className="w-48 h-48 rounded-full shadow-inner border-2 border-slate-300 shrink-0"
+                    style={{ background: bandConicGradient }}
+                  />
+                  <div className="flex-1 space-y-1.5 font-mono border-l border-slate-200 pl-6">
+                    {activeBands.map((band, idx) => {
+                      const count = matrix[band].total;
+                      const pct = ((count / totalQsos) * 100).toFixed(1);
+                      const color = BAND_PIE_COLORS[idx % BAND_PIE_COLORS.length];
 
-                    return (
-                      <div key={band} className="flex items-center justify-between text-[11px]">
-                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} /> {band}</span>
-                        <span><strong>{pct}%</strong> ({count})</span>
-                      </div>
-                    );
-                  })}
+                      return (
+                        <div key={band} className="flex items-center justify-between text-xs py-0.5 border-b border-slate-100">
+                          <span className="flex items-center gap-2 font-semibold">
+                            <span className="w-3 h-3 rounded" style={{ backgroundColor: color }} />
+                            {band} Band
+                          </span>
+                          <span className="text-slate-900">
+                            <strong className="font-bold text-slate-900">{pct}%</strong>{' '}
+                            <span className="text-slate-500">({count} QSOs)</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
