@@ -100,7 +100,7 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
   const workedSections = useMemo(() => {
     const set = new Set<string>();
     for (const qso of qsos) {
-      if (qso.section && qso.section.toUpperCase() !== 'DX') {
+      if (qso.section) {
         set.add(qso.section.toUpperCase());
       }
     }
@@ -122,6 +122,8 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
     const area = SECTION_CALL_AREA[code] || 'DX';
     return CALL_AREA_COLORS[area] || '#94a3b8';
   };
+
+  const isDxWorked = workedSections.has('DX');
 
   return (
     <div style={{ background: bg, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
@@ -154,6 +156,49 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
             <polygon points="500,132 685,132 685,340 500,340" />
           </clipPath>
         </defs>
+
+        {/* Top-Left DX Section Inset Badge */}
+        <g transform="translate(18, 18)">
+          <rect
+            x={0}
+            y={0}
+            width={64}
+            height={28}
+            rx={5}
+            fill={isDxWorked ? CALL_AREA_COLORS['DX'] : unworkedFill}
+            stroke={strokeColor}
+            strokeWidth={1}
+          />
+          {/* Text Halo Outline */}
+          <text
+            x={32}
+            y={18}
+            textAnchor="middle"
+            fontSize={9}
+            fontWeight="bold"
+            fontFamily="monospace"
+            fill="none"
+            stroke={dark ? '#0f172a' : '#ffffff'}
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            DX
+          </text>
+          {/* Text Fill */}
+          <text
+            x={32}
+            y={18}
+            textAnchor="middle"
+            fontSize={9}
+            fontWeight="bold"
+            fontFamily="monospace"
+            fill={isDxWorked ? (dark ? '#ffffff' : '#0f172a') : (dark ? '#cbd5e1' : '#334155')}
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            DX
+          </text>
+        </g>
 
         {/* Layer 1: Southern Canada Provinces Layer (Clipped to top map region, with Ontario split into 4 sections) */}
         <g clipPath="url(#canada-top-map-clip)">
