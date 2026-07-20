@@ -419,8 +419,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
         {/* ================= PAGE 3: 86-Section Sweep Scorecard ================= */}
         <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
-          <div className="space-y-6">
-            <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
+          <div className="flex-1 flex flex-col justify-between pb-3">
+            <div className="border-b-2 border-slate-900 pb-2.5 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-black text-slate-900 uppercase">ARRL Section Scorecard</h2>
                 <p className="text-xs text-slate-600">Worked Sections: <strong>{sweep.workedCount} / 86</strong> ({sweep.sweepPct}%)</p>
@@ -428,8 +428,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
             </div>
 
-            {/* 86 Section Check-Off Grid */}
-            <div className="grid grid-cols-10 gap-1 text-center font-mono text-[9px]">
+            {/* 86 Section Check-Off Grid (Condensed 1-line flex cells) */}
+            <div className="grid grid-cols-10 sm:grid-cols-12 gap-1 text-center font-mono text-[8.5px]">
               {OFFICIAL_ARRL_SECTIONS.map((sec) => {
                 const count = sweep.sectionCounts[sec.code] || 0;
                 const isWorked = count > 0;
@@ -437,11 +437,16 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 return (
                   <div
                     key={sec.code}
-                    className={`p-1 rounded border ${isWorked ? 'bg-emerald-100 border-emerald-400 font-bold text-emerald-950' : 'bg-slate-50 border-slate-200 text-slate-400'
-                      }`}
+                    className={`py-0.5 px-1 rounded border flex items-center justify-between transition ${
+                      isWorked
+                        ? 'bg-emerald-100 border-emerald-400 font-bold text-emerald-950'
+                        : 'bg-slate-50 border-slate-200 text-slate-400'
+                    }`}
                   >
-                    <div>{sec.code}</div>
-                    <div className="text-[8px]">{isWorked ? `${count} QSO${count > 1 ? 's' : ''}` : '-'}</div>
+                    <span className="font-bold text-[8.5px]">{sec.code}</span>
+                    <span className="text-[7.5px] font-mono leading-none">
+                      {isWorked ? count : '-'}
+                    </span>
                   </div>
                 );
               })}
@@ -450,7 +455,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             {/* Geographic Section Choropleth Map */}
             <ErrorBoundary fallbackTitle="Section Coverage Map Error">
               <div className="border border-slate-300 rounded overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center justify-between px-3 py-1 border-b border-slate-200 bg-slate-50">
                   <h3 className="text-xs font-bold text-slate-900 uppercase">Section Coverage Map</h3>
                   <span className="text-[10px] font-mono text-slate-500">{sweep.workedCount} of 86 sections worked</span>
                 </div>
@@ -459,24 +464,24 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </ErrorBoundary>
 
             {/* Top 10 Contacted Sections */}
-            <div className="border border-slate-300 rounded p-3 space-y-2">
+            <div className="border border-slate-300 rounded p-2.5 space-y-1.5">
               <h3 className="text-xs font-bold text-slate-900 uppercase">Top 10 Contacted Sections</h3>
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-slate-100 text-slate-700 uppercase text-[10px]">
                   <tr>
-                    <th className="p-1.5">Section</th>
-                    <th className="p-1.5">Name</th>
-                    <th className="p-1.5 text-right">QSOs</th>
-                    <th className="p-1.5 text-right">% Share</th>
+                    <th className="p-1">Section</th>
+                    <th className="p-1">Name</th>
+                    <th className="p-1 text-right">QSOs</th>
+                    <th className="p-1 text-right">% Share</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 text-[11px]">
+                <tbody className="divide-y divide-slate-200 text-[10.5px]">
                   {sweep.topSections.map((sec) => (
                     <tr key={sec.code}>
-                      <td className="p-1.5 font-bold text-sky-800">{sec.code}</td>
-                      <td className="p-1.5">{sec.name}</td>
-                      <td className="p-1.5 text-right font-bold text-slate-900">{sec.count}</td>
-                      <td className="p-1.5 text-right text-slate-600">{sec.pct}%</td>
+                      <td className="p-1 font-bold text-sky-800">{sec.code}</td>
+                      <td className="p-1">{sec.name}</td>
+                      <td className="p-1 text-right font-bold text-slate-900">{sec.count}</td>
+                      <td className="p-1 text-right text-slate-600">{sec.pct}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -484,7 +489,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </div>
           </div>
 
-          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
+          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between shrink-0">
             <span>ARRL Section Scorecard • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
             <span>Page 3 of {totalReportPages}</span>
           </div>
@@ -492,8 +497,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
         {/* ================= PAGE 4: Geodetic Map & Main Operator / Station Breakdown ================= */}
         <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
-          <div className="space-y-5">
-            <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
+          <div className="space-y-3">
+            <div className="border-b-2 border-slate-900 pb-2 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-black text-slate-900 uppercase">QSO Map & Operator Statistics</h2>
               </div>
@@ -503,7 +508,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             {/* Static SVG QSO Map — print-safe, no Leaflet/tiles */}
             <ErrorBoundary fallbackTitle="QSO Propagation Map Error">
               <div className="border border-slate-300 rounded overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center justify-between px-3 py-1 border-b border-slate-200 bg-slate-50">
                   <h3 className="text-xs font-bold text-slate-900 uppercase">QSO Propagation Map</h3>
                   <span className="text-[10px] font-mono text-slate-500">
                     Home: {config.homeGrid || 'N/A'} · {config.homeSection || 'N/A'} · {displayQsos.length} QSOs
@@ -520,10 +525,10 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </ErrorBoundary>
 
             {/* Main Station Operator & Rig Breakdown Grids — Full-Width 100% Sections */}
-            <div className="space-y-4">
+            <div className="space-y-2.5">
               {/* Operator Leaderboard & Band/Mode Breakdown (Full-Width, 10+ Operators) */}
-              <div className="border border-slate-300 rounded p-3 space-y-2">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+              <div className="border border-slate-300 rounded p-2.5 space-y-1">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1">
                   <h3 className="text-xs font-bold text-slate-900 uppercase">
                     {operatorStats.length > 10 ? 'Top 10 Operators & Activity Breakdown' : 'Operator Leaderboard & Activity Breakdown'}
                   </h3>
@@ -532,50 +537,50 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[10px] font-mono border-collapse">
+                  <table className="w-full text-left text-[9.5px] font-mono border-collapse">
                     <thead className="bg-slate-100 text-slate-700 uppercase border-b border-slate-300">
                       <tr>
-                        <th className="p-1.5 font-bold text-slate-900 w-[110px]">Operator Call</th>
-                        <th className="p-1.5 text-right font-bold text-slate-900 w-[55px]">QSOs</th>
-                        <th className="p-1.5 text-right text-slate-700 w-[75px]">Active Hours</th>
-                        <th className="p-1.5 text-right text-slate-700 w-[65px] pr-4">% Share</th>
-                        <th className="p-1.5 text-left text-slate-700 pl-2">Bands Worked</th>
-                        <th className="p-1.5 text-left text-slate-700 w-[160px]">Modes Used</th>
+                        <th className="p-1 font-bold text-slate-900 w-[110px]">Operator Call</th>
+                        <th className="p-1 text-right font-bold text-slate-900 w-[45px]">QSOs</th>
+                        <th className="p-1 text-right text-slate-700 w-[65px]">Active Hours</th>
+                        <th className="p-1 text-right text-slate-700 w-[55px] pr-3">% Share</th>
+                        <th className="p-1 text-left text-slate-700 pl-2">Bands Worked</th>
+                        <th className="p-1 text-left text-slate-700 w-[140px]">Modes Used</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                       {operatorStats.slice(0, 10).map((op) => (
                         <tr key={op.callsign} className="hover:bg-slate-50">
-                          <td className="p-1.5 font-bold text-sky-800 whitespace-nowrap">{op.callsign}</td>
-                          <td className="p-1.5 text-right font-bold text-slate-900">{op.totalQsos}</td>
-                          <td className="p-1.5 text-right text-slate-600">{op.activeHours} hrs</td>
-                          <td className="p-1.5 text-right text-slate-600 pr-4">{op.pctOfTotal}%</td>
-                          <td className="p-1.5 text-left pl-2">
-                            <div className="block leading-normal">
+                          <td className="p-1 font-bold text-sky-800 whitespace-nowrap">{op.callsign}</td>
+                          <td className="p-1 text-right font-bold text-slate-900">{op.totalQsos}</td>
+                          <td className="p-1 text-right text-slate-600">{op.activeHours} hrs</td>
+                          <td className="p-1 text-right text-slate-600 pr-3">{op.pctOfTotal}%</td>
+                          <td className="p-1 text-left pl-2">
+                            <div className="flex flex-wrap gap-0.5 items-center leading-none">
                               {op.workedBands.map((b) => {
                                 const bCount = op.bandCounts ? op.bandCounts[b] : undefined;
                                 return (
-                                  <span key={b} className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8.5px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300 whitespace-nowrap">
+                                  <span key={b} className="px-1 py-0.5 text-[8px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300 whitespace-nowrap">
                                     {b}{bCount !== undefined ? ` (${bCount})` : ''}
                                   </span>
                                 );
                               })}
                             </div>
                           </td>
-                          <td className="p-1.5 text-left">
-                            <div className="block leading-normal">
+                          <td className="p-1 text-left">
+                            <div className="flex flex-wrap gap-0.5 items-center leading-none">
                               {op.cwQsos > 0 && (
-                                <span className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8px] font-bold rounded bg-blue-100 text-blue-900 border border-blue-300 whitespace-nowrap">
+                                <span className="px-1 py-0.5 text-[7.5px] font-bold rounded bg-blue-100 text-blue-900 border border-blue-300 whitespace-nowrap">
                                   CW ({op.cwQsos})
                                 </span>
                               )}
                               {op.phoneQsos > 0 && (
-                                <span className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8px] font-bold rounded bg-emerald-100 text-emerald-900 border border-emerald-300 whitespace-nowrap">
+                                <span className="px-1 py-0.5 text-[7.5px] font-bold rounded bg-emerald-100 text-emerald-900 border border-emerald-300 whitespace-nowrap">
                                   SSB ({op.phoneQsos})
                                 </span>
                               )}
                               {op.digitalQsos > 0 && (
-                                <span className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8px] font-bold rounded bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                                <span className="px-1 py-0.5 text-[7.5px] font-bold rounded bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
                                   DIG ({op.digitalQsos})
                                 </span>
                               )}
@@ -589,39 +594,39 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               </div>
 
               {/* Station Breakdown (Full-Width) */}
-              <div className="border border-slate-300 rounded p-3 space-y-2">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+              <div className="border border-slate-300 rounded p-2.5 space-y-1">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1">
                   <h3 className="text-xs font-bold text-slate-900 uppercase">Station Breakdown</h3>
                   <span className="text-[10px] font-mono text-slate-500">{stationStats.length} Active Stations</span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[10px] font-mono border-collapse">
+                  <table className="w-full text-left text-[9.5px] font-mono border-collapse">
                     <thead className="bg-slate-100 text-slate-700 uppercase border-b border-slate-300">
                       <tr>
-                        <th className="p-1.5 font-bold text-slate-900 w-[110px]">Station Name</th>
-                        <th className="p-1.5 text-right font-bold text-slate-900 w-[65px]">Total QSOs</th>
-                        <th className="p-1.5 text-right text-blue-800 w-[55px]">CW QSOs</th>
-                        <th className="p-1.5 text-right text-emerald-800 w-[75px]">Phone (SSB)</th>
-                        <th className="p-1.5 text-right text-amber-800 w-[55px]">Digital</th>
-                        <th className="p-1.5 text-right text-slate-700 w-[65px] pr-4">% Share</th>
-                        <th className="p-1.5 text-left text-slate-700 pl-2">Bands Worked</th>
+                        <th className="p-1 font-bold text-slate-900 w-[110px]">Station Name</th>
+                        <th className="p-1 text-right font-bold text-slate-900 w-[55px]">Total QSOs</th>
+                        <th className="p-1 text-right text-blue-800 w-[50px]">CW QSOs</th>
+                        <th className="p-1 text-right text-emerald-800 w-[65px]">Phone (SSB)</th>
+                        <th className="p-1 text-right text-amber-800 w-[50px]">Digital</th>
+                        <th className="p-1 text-right text-slate-700 w-[55px] pr-3">% Share</th>
+                        <th className="p-1 text-left text-slate-700 pl-2">Bands Worked</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                       {stationStats.map((st) => (
                         <tr key={st.name} className="hover:bg-slate-50">
-                          <td className="p-1.5 font-bold text-emerald-800 whitespace-nowrap">{st.name}</td>
-                          <td className="p-1.5 text-right font-bold text-slate-900">{st.totalQsos}</td>
-                          <td className="p-1.5 text-right text-blue-900">{st.cwQsos}</td>
-                          <td className="p-1.5 text-right text-emerald-900">{st.phoneQsos}</td>
-                          <td className="p-1.5 text-right text-amber-900">{st.digitalQsos}</td>
-                          <td className="p-1.5 text-right text-slate-600 pr-4">{st.pctOfTotal}%</td>
-                          <td className="p-1.5 text-left pl-2">
-                            <div className="block leading-normal">
+                          <td className="p-1 font-bold text-emerald-800 whitespace-nowrap">{st.name}</td>
+                          <td className="p-1 text-right font-bold text-slate-900">{st.totalQsos}</td>
+                          <td className="p-1 text-right text-blue-900">{st.cwQsos}</td>
+                          <td className="p-1 text-right text-emerald-900">{st.phoneQsos}</td>
+                          <td className="p-1 text-right text-amber-900">{st.digitalQsos}</td>
+                          <td className="p-1 text-right text-slate-600 pr-3">{st.pctOfTotal}%</td>
+                          <td className="p-1 text-left pl-2">
+                            <div className="flex flex-wrap gap-0.5 items-center leading-none">
                               {st.workedBands?.map((b) => {
                                 const bCount = st.bandCounts ? st.bandCounts[b] : undefined;
                                 return (
-                                  <span key={b} className="inline-block px-1.5 py-0.5 mr-1 mb-1 text-[8.5px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300 whitespace-nowrap">
+                                  <span key={b} className="px-1 py-0.5 text-[8px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300 whitespace-nowrap">
                                     {b}{bCount !== undefined ? ` (${bCount})` : ''}
                                   </span>
                                 );
@@ -637,7 +642,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </div>
           </div>
 
-          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
+          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between shrink-0">
             <span>ARRL Field Day Operations Summary • QSO Map & Operator Statistics • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
             <span>Page 4 of {totalReportPages}</span>
           </div>

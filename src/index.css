@@ -47,12 +47,13 @@
 }
 
 /* Fixed-ratio A4 Printable Page Containers */
+/* Fixed-ratio Printable Page Containers (Letter / A4 Compatible) */
 .a4-page {
   width: 794px !important;
-  min-height: 1123px !important;
+  min-height: 1050px !important;
   max-width: 794px !important;
   margin: 0 auto 30px auto;
-  padding: 40px !important;
+  padding: 32px 36px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   background: #ffffff !important;
@@ -61,7 +62,7 @@
 
 /* Chrome / Browser Print CSS Rules */
 @page {
-  size: A4 portrait;
+  size: letter portrait;
   margin: 0;
   /* Forces Chrome print dialog margins to 0 by default */
 }
@@ -70,7 +71,7 @@
 
   html,
   body {
-    width: 210mm !important;
+    width: 8.5in !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -118,15 +119,15 @@
   }
 
   .a4-page {
-    width: 210mm !important;
-    height: 297mm !important;
-    max-width: 210mm !important;
-    max-height: 297mm !important;
-    min-height: 297mm !important;
+    width: 8.5in !important;
+    height: 11in !important;
+    max-width: 8.5in !important;
+    max-height: 11in !important;
+    min-height: 11in !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 12mm 15mm !important;
+    padding: 10mm 12mm !important;
     margin: 0 !important;
     box-sizing: border-box !important;
     page-break-after: always !important;

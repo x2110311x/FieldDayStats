@@ -69,7 +69,7 @@ const SECTION_CALL_AREA: Record<string, string> = {
 const CALL_AREA_COLORS: Record<string, string> = {
   '1':      '#6366f1', // Indigo
   '2':      '#8b5cf6', // Purple
-  '3':      '#a855f7', // Violet
+  '3':      '#f97316', // Orange (WPA, EPA, MDC, DE - distinct contrast against NY/NJ purple & OH blue)
   '4':      '#10b981', // Emerald
   '5':      '#22c55e', // Green
   '6':      '#ec4899', // Pink
