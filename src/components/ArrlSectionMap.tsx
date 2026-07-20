@@ -3,77 +3,28 @@ import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { geoAlbersUsa } from 'd3-geo';
 import { QSO } from '../types';
 import { OFFICIAL_ARRL_SECTIONS } from '../services/geo/arrlSections';
+import { getSectionFromCountyFips } from '../services/geo/countySectionMap';
 
-// US States via AlbersUsa projection (handles AK/HI insets automatically)
-const US_GEO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
+// US and Canada TopoJSON / GeoJSON datasets
+const US_COUNTIES_GEO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json';
+const US_STATES_GEO_URL   = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
+const CANADA_GEO_URL      = 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/master/public/data/canada.geojson';
 
-/**
- * Maps US Census FIPS state codes → primary ARRL section code.
- * States that span multiple ARRL sections map to their primary section code.
- */
-const FIPS_TO_SECTION: Record<string, string | string[]> = {
-  // Call District 1
-  '09': 'CT',   // Connecticut
-  '25': ['EMA', 'WMA'], // Massachusetts — split (EMA / WMA)
-  '23': 'ME',   // Maine
-  '33': 'NH',   // New Hampshire
-  '44': 'RI',   // Rhode Island
-  '50': 'VT',   // Vermont
-  // Call District 2
-  '36': ['ENY', 'NNY', 'WNY', 'NLI'], // New York
-  '34': ['NNJ', 'SNJ'], // New Jersey
-  // Call District 3
-  '10': 'DE',   // Delaware
-  '42': ['EPA', 'WPA'], // Pennsylvania
-  '24': 'MDC',  // Maryland
-  '11': 'MDC',  // DC
-  // Call District 4
-  '01': 'AL',   // Alabama
-  '13': 'GA',   // Georgia
-  '21': 'KY',   // Kentucky
-  '12': ['NFL', 'SFL', 'WCF'], // Florida
-  '37': ['NC', 'SC'], // NC
-  '45': 'SC',   // South Carolina
-  '47': 'TN',   // Tennessee
-  '51': ['VA', 'MDC'], // Virginia
-  '54': 'WV',   // West Virginia
-  // Call District 5
-  '05': 'AR',   // Arkansas
-  '22': 'LA',   // Louisiana
-  '28': 'MS',   // Mississippi
-  '35': 'NM',   // New Mexico
-  '40': 'OK',   // Oklahoma
-  '48': ['NTX', 'STX', 'WTX', 'ETX'], // Texas
-  // Call District 6
-  '06': ['EB', 'LAX', 'SB', 'SCV', 'SDG', 'SF', 'SJV', 'ORG'], // California
-  // Call District 7
-  '04': 'AZ',   // Arizona
-  '16': 'ID',   // Idaho
-  '30': 'MT',   // Montana
-  '32': 'NV',   // Nevada
-  '41': 'OR',   // Oregon
-  '49': 'UT',   // Utah
-  '53': ['WWA', 'EWA'], // Washington
-  '56': 'WY',   // Wyoming
-  // Call District 8
-  '26': 'MI',   // Michigan
-  '39': 'OH',   // Ohio
-  // Call District 9
-  '17': 'IL',   // Illinois
-  '18': 'IN',   // Indiana
-  '55': 'WI',   // Wisconsin
-  // Call District 0
-  '08': 'CO',   // Colorado
-  '19': 'IA',   // Iowa
-  '20': 'KS',   // Kansas
-  '27': 'MN',   // Minnesota
-  '29': 'MO',   // Missouri
-  '31': 'NE',   // Nebraska
-  '38': 'ND',   // North Dakota
-  '46': 'SD',   // South Dakota
-  // Alaska & Hawaii
-  '02': 'AK',   // Alaska
-  '15': 'PAC',  // Hawaii → Pacific
+// Mapping Canadian GeoJSON Province names to RAC/ARRL Section codes
+const CAN_PROVINCE_SECTIONS: Record<string, string> = {
+  'Alberta':                   'AB',
+  'British Columbia':          'BC',
+  'Manitoba':                  'MB',
+  'New Brunswick':             'NB',
+  'Newfoundland and Labrador': 'NL',
+  'Nova Scotia':               'NS',
+  'Ontario':                   'ONE',
+  'Prince Edward Island':      'PE',
+  'Quebec':                    'QC',
+  'Saskatchewan':              'SK',
+  'Yukon Territory':           'TER',
+  'Northwest Territories':     'TER',
+  'Nunavut':                   'TER',
 };
 
 // Distinct colours per ARRL division for the worked-state choropleth
@@ -92,14 +43,17 @@ const DIVISION_COLORS: Record<string, string> = {
   'Pacific':       '#f97316',
   'Northwestern':  '#ef4444',
   'Southwestern':  '#ec4899',
-  'RAC':           '#64748b',
+  'RAC':           '#eab308', // Warm vibrant yellow for RAC / Canada Division
   'International': '#94a3b8',
 };
+
+// Exact merged cartographic coastline outline SVG Path for Puerto Rico
+const PUERTO_RICO_REAL_PATH = "M46.36723910171804,28.89630521152958L45.059445178335864,29.35158767417647L43.39498018494078,28.66866398020636L41.96829590488824,29.20931190459919L41.136063408190694,28.83939490369869L39.1149273447827,28.156471209728807L36.49933949801925,29.74995982899236L36.02377807133462,29.57922890549969L35.78599735799253,29.60768405941519L34.002642007926625,29.835325290738524L33.52708058124199,30.518248984708634L31.743725231176086,29.66459436724608L31.624834874504813,29.1808567506838L29.12813738441264,28.95321551936047L27.463672391018008,29.892235598569414L25.561426684280832,29.32313252026097L24.13474240422738,29.66459436724608L24.253632760898654,28.156471209728807L25.44253632760956,27.27436143835064L24.13474240422738,26.932899591365526L24.491413474240744,25.08331458686314L25.085865257596197,24.65648727813175L25.20475561426747,22.522350734475253L26.036988110964558,21.640240963097085L24.96697490092538,19.250008034201755L23.659180977543656,18.254077647162035L22.113606340819388,16.09148594958981L23.183619550859476,15.66465864085842L25.799207397622922,14.327266406833587L25.561426684280832,12.250040171007981L26.39365918097792,11.339475245714539L27.701453104360098,11.05492370656009L30.435931307794363,11.168744322221869L32.57595772787363,11.880123170107481L34.35931307793953,12.050854093599924L36.49933949801925,11.937033477938371L38.87714663144061,12.050854093599924L40.779392338177786,12.449226248415812L43.63276089828332,11.709392246614811L44.82166446499423,12.022398939684422L46.60501981506013,12.136219555346202L48.74504623513894,12.563046864077592L49.69616908850776,11.993943785769261L52.66842800528411,11.993943785769261L53.85733157199502,12.363860786669534L55.284015852048014,12.193129863177091L57.66182298546937,12.648412325823983L58.969616908851094,13.075239634555146L60.03963011889073,12.449226248415812L63.01188903566754,13.189060250216812L64.55746367239135,12.932963864978092L67.41083223249734,13.160605096301424L69.90752972258952,14.071170021594867L71.09643328930042,14.099625175510255L72.52311756935296,15.35165194778881L75.25759577278723,16.063030795674422L76.68428005284068,15.266286486042759L76.44649933949859,16.57522356615209L76.8031704095115,18.538629186316257L78.34874504623531,19.8191111125102L77.51651254953777,21.042682730873253L76.20871862615604,20.50203480648031L76.5653896961694,21.298779116111973L75.49537648612977,21.24186880828131L74.54425363276141,22.152433733574753L73.5931307793926,21.782516732674253L72.87978863936632,22.351619810982584L71.69088507265542,23.802832660669196L70.97754293262915,25.79469343474875L69.90752972258952,26.335341359141694L69.19418758256325,27.70118874708203L67.1730515191548,28.725574288037137L65.03302509907553,29.15240159676864L63.60634081902299,28.81093974978353L62.774108322325446,29.57922890549969L61.94187582562745,29.20931190459919L59.08850726552237,30.432883522962584L57.89960369881146,30.176787137723522L57.06737120211392,30.888165985609135L56.235138705416375,30.945076293440025L55.521796565390105,29.920690752484802L53.025099075297476,28.86785005761419L51.47952443857366,30.11987682989286L49.339498018494396,28.64020882629086L48.03170409511267,28.412567594967527ZM86.1955085865261,16.546768412236702L87.50330250990783,17.144326644460534L88.92998678996037,16.774409643560034L90.00000000000045,17.798795184515143L87.978863936592,18.823180725470365L86.55217965653901,18.282532801077195ZM0.23778071334299966,24.40039089289303L2.615587846764356,24.05892904590803L3.210039630119354,25.282500664271083L1.4266842800534505,26.363796513057196L4.547473508864641e-13,25.453231587763753ZM78.34874504623531,24.25811512331586L84.17437252311811,22.721536811883198L88.33553500660491,23.632101737176527L86.1955085865261,24.37193573897764L83.69881109643347,24.57112181638547L82.39101717305175,25.25404551035558L81.43989431968294,24.912583663370583L79.41875825627494,25.396321279932863ZM77.75429326287986,15.09555556255009L78.58652575957785,15.493927717365978L78.58652575957785,16.745954489644532Z";
 
 interface ArrlSectionMapProps {
   qsos: QSO[];
   dark?: boolean;
-  /** Show section code labels on worked sections */
+  /** Show section code labels on map */
   showLabels?: boolean;
 }
 
@@ -119,7 +73,7 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
     return set;
   }, [qsos]);
 
-  // Projection instance matching ComposableMap scale & translate
+  // Standard AlbersUsa projection — automatically places Alaska & Hawaii in bottom-left inset boxes
   const projection = useMemo(() => {
     return geoAlbersUsa().scale(900).translate([480, 250]);
   }, []);
@@ -135,9 +89,8 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
 
   // ── Theme ───────────────────────────────────────────────────────────────────
   const bg           = dark ? '#0f172a' : '#f1f5f9';
-  const unworkedFill = dark ? '#1e293b' : '#e2e8f0';
-  const strokeColor  = dark ? '#334155' : '#94a3b8';
-  const labelColor   = dark ? '#f8fafc' : '#0f172a';
+  const unworkedFill = dark ? '#1e293b' : '#ffffff';
+  const strokeColor  = dark ? '#475569' : '#64748b';
 
   const getSectionColor = (sectionCode: string) => {
     const meta = sectionMeta.get(sectionCode);
@@ -145,16 +98,8 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
     return DIVISION_COLORS[meta.division] || '#94a3b8';
   };
 
-  const fipsToSectionCode = (fips: string): string | null => {
-    const val = FIPS_TO_SECTION[fips];
-    if (!val) return null;
-    if (Array.isArray(val)) return val[0];
-    return val;
-  };
-
   return (
-    <div style={{ background: bg, borderRadius: 4, overflow: 'hidden' }}>
-      {/* US States (AlbersUsa projection — includes AK/HI insets) */}
+    <div style={{ background: bg, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
       <ComposableMap
         projection="geoAlbersUsa"
         projectionConfig={{ scale: 900 }}
@@ -162,72 +107,180 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
         height={500}
         style={{ width: '100%', height: 'auto', display: 'block' }}
       >
-        <Geographies geography={US_GEO_URL}>
+        <defs>
+          {/* Clips Canada layer to top portion of map so it never bleeds down into Alaska/Hawaii insets */}
+          <clipPath id="canada-top-map-clip">
+            <rect x={0} y={0} width={960} height={340} />
+          </clipPath>
+        </defs>
+
+        {/* Layer 1: Southern Canada Provinces Layer (Clipped to top map region) */}
+        <g clipPath="url(#canada-top-map-clip)">
+          <Geographies geography={CANADA_GEO_URL}>
+            {({ geographies }: { geographies: any[] }) =>
+              geographies.map((geo: any) => {
+                const provName: string = geo.properties?.name ?? '';
+                const sectionCode = CAN_PROVINCE_SECTIONS[provName];
+
+                // Exclude Yukon, Northwest Territories, Nunavut to keep map clean
+                if (provName === 'Yukon Territory' || provName === 'Northwest Territories' || provName === 'Nunavut' || sectionCode === 'TER') {
+                  return null;
+                }
+
+                let worked = false;
+
+                if (provName === 'Ontario') {
+                  worked = workedSections.has('ONE') || workedSections.has('ONS') || workedSections.has('GH') || workedSections.has('ONN');
+                } else if (sectionCode) {
+                  worked = workedSections.has(sectionCode);
+                }
+
+                const fill = worked ? DIVISION_COLORS['RAC'] : unworkedFill;
+
+                return (
+                  <Geography
+                    key={`can-${geo.rsmKey}`}
+                    geography={geo}
+                    fill={fill}
+                    stroke={strokeColor}
+                    strokeWidth={0.8}
+                    style={{ default: { outline: 'none' }, hover: { outline: 'none' }, pressed: { outline: 'none' } }}
+                  />
+                );
+              })
+            }
+          </Geographies>
+        </g>
+
+        {/* Layer 2: US Counties mapped to ARRL Sections */}
+        <Geographies geography={US_COUNTIES_GEO_URL}>
           {({ geographies }: { geographies: any[] }) =>
             geographies.map((geo: any) => {
-              const fips: string = geo.id?.toString().padStart(2, '0') ?? '';
-              const sectionCode = fipsToSectionCode(fips);
+              const fips: string = geo.id?.toString().padStart(5, '0') ?? '';
+              const sectionCode = getSectionFromCountyFips(fips);
               const worked = sectionCode ? workedSections.has(sectionCode) : false;
               const fill = worked ? getSectionColor(sectionCode!) : unworkedFill;
 
-              return (
+              // Shift Alaska (-82px) and Hawaii (-70px) left so their inset boxes sit completely clear of California & CONUS
+              const isAK = fips.startsWith('02');
+              const isHI = fips.startsWith('15');
+              const transform = isAK ? 'translate(-82, 15)' : isHI ? 'translate(-70, 15)' : undefined;
+
+              const element = (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
                   fill={fill}
-                  stroke={strokeColor}
+                  stroke={fill}
                   strokeWidth={0.5}
                   style={{ default: { outline: 'none' }, hover: { outline: 'none' }, pressed: { outline: 'none' } }}
                 />
               );
+
+              return transform ? <g key={`g-${geo.rsmKey}`} transform={transform}>{element}</g> : element;
             })
           }
         </Geographies>
 
-        {/* Section code labels safely projected (skips PR, VI, RAC, DX or unprojectable coordinates) */}
-        {showLabels && OFFICIAL_ARRL_SECTIONS
-          .filter(sec => workedSections.has(sec.code.toUpperCase()))
-          .map(sec => {
-            const pos = projection([sec.lng, sec.lat]);
-            if (!pos || isNaN(pos[0]) || isNaN(pos[1])) return null; // Safe guard against null projection
+        {/* Layer 3: US State Outlines */}
+        <Geographies geography={US_STATES_GEO_URL}>
+          {({ geographies }: { geographies: any[] }) =>
+            geographies.map((geo: any) => {
+              const stFips = geo.id?.toString().padStart(2, '0');
+              const isAK = stFips === '02';
+              const isHI = stFips === '15';
+              const transform = isAK ? 'translate(-82, 15)' : isHI ? 'translate(-70, 15)' : undefined;
 
-            return (
-              <g key={sec.code} transform={`translate(${pos[0]}, ${pos[1]})`}>
-                <text
-                  textAnchor="middle"
-                  fontSize={7}
-                  fontWeight="bold"
-                  fontFamily="monospace"
-                  fill={labelColor}
-                  style={{ pointerEvents: 'none', userSelect: 'none' }}
-                >
-                  {sec.code}
-                </text>
-              </g>
-            );
-          })
-        }
+              const element = (
+                <Geography
+                  key={`state-${geo.rsmKey}`}
+                  geography={geo}
+                  fill="none"
+                  stroke={strokeColor}
+                  strokeWidth={1}
+                  style={{ default: { outline: 'none' }, hover: { outline: 'none' }, pressed: { outline: 'none' } }}
+                />
+              );
+
+              return transform ? <g key={`stg-${geo.rsmKey}`} transform={transform}>{element}</g> : element;
+            })
+          }
+        </Geographies>
+
+        {/* Alaska Inset Frame (Shifted Left - 75px clear of California & CONUS, encloses Ketchikan panhandle tip) */}
+        <rect x={15} y={350} width={192} height={142} fill="none" stroke={strokeColor} strokeWidth={0.8} opacity={0.6} rx={3} />
+
+        {/* Hawaii Inset Frame (Encloses all islands Niihau through Big Island with zero overflow) */}
+        <rect x={215} y={398} width={105} height={88} fill="none" stroke={strokeColor} strokeWidth={0.8} opacity={0.6} rx={3} />
+
+        {/* Puerto Rico Inset Frame (Bottom-Right) */}
+        <rect x={790} y={395} width={160} height={95} fill="none" stroke={strokeColor} strokeWidth={0.8} opacity={0.6} rx={3} />
+
+        {/* Puerto Rico Real Cartographic Coastline Path */}
+        <g transform="translate(825, 420)">
+          <path
+            d={PUERTO_RICO_REAL_PATH}
+            fill={workedSections.has('PR') ? getSectionColor('PR') : unworkedFill}
+            stroke={strokeColor}
+            strokeWidth={1}
+          />
+        </g>
+
+        {/* Section code labels — BOTH worked and unworked sections labeled across US & Canada */}
+        {showLabels && OFFICIAL_ARRL_SECTIONS.map(sec => {
+          const code = sec.code.toUpperCase();
+          const worked = workedSections.has(code);
+
+          let pos = projection([sec.lng, sec.lat]);
+
+          // Shift Alaska & Hawaii label markers to match shifted insets
+          if (code === 'AK' && pos) {
+            pos = [pos[0] - 82, pos[1] + 15];
+          } else if (code === 'PAC' && pos) {
+            pos = [pos[0] - 70, pos[1] + 15];
+          } else if (code === 'PR') {
+            pos = [872, 440]; // Centered over Puerto Rico island in bottom-right inset box
+          }
+
+          if (!pos || isNaN(pos[0]) || isNaN(pos[1])) return null;
+
+          const fontColor = worked
+            ? (dark ? '#ffffff' : '#0f172a')
+            : (dark ? '#cbd5e1' : '#334155');
+
+          const haloColor = dark ? '#0f172a' : '#ffffff';
+
+          return (
+            <g key={sec.code} transform={`translate(${pos[0]}, ${pos[1]})`}>
+              {/* Text outline / halo for 100% legibility against dark & light backgrounds */}
+              <text
+                textAnchor="middle"
+                fontSize={worked ? 8 : 7}
+                fontWeight="bold"
+                fontFamily="monospace"
+                fill="none"
+                stroke={haloColor}
+                strokeWidth={2.5}
+                strokeLinejoin="round"
+                style={{ pointerEvents: 'none', userSelect: 'none' }}
+              >
+                {sec.code}
+              </text>
+              {/* High contrast text fill */}
+              <text
+                textAnchor="middle"
+                fontSize={worked ? 8 : 7}
+                fontWeight="bold"
+                fontFamily="monospace"
+                fill={fontColor}
+                style={{ pointerEvents: 'none', userSelect: 'none' }}
+              >
+                {sec.code}
+              </text>
+            </g>
+          );
+        })}
       </ComposableMap>
-
-      {/* Legend */}
-      <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: '6px 12px',
-        padding: '4px 8px',
-        borderTop: `1px solid ${strokeColor}`,
-        fontSize: 9,
-        fontFamily: 'monospace',
-        color: dark ? '#64748b' : '#475569',
-      }}>
-        <span style={{ fontWeight: 'bold', color: dark ? '#94a3b8' : '#334155' }}>
-          Worked: {workedSections.size} / 86 sections
-        </span>
-        {Object.entries(DIVISION_COLORS).slice(0, 8).map(([div, color]) => (
-          <span key={div} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: color }} />
-            {div}
-          </span>
-        ))}
-      </div>
     </div>
   );
 };
