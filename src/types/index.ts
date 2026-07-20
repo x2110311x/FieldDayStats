@@ -114,6 +114,7 @@ export interface OperatorStats {
   topBand: string;
   workedBands: string[];
   workedModes: string;
+  bandCounts: Record<string, number>;
   pctOfTotal: number;
 }
 
@@ -124,6 +125,8 @@ export interface StationStats {
   phoneQsos: number;
   digitalQsos: number;
   topBand: string;
+  workedBands: string[];
+  bandCounts: Record<string, number>;
   pctOfTotal: number;
 }
 

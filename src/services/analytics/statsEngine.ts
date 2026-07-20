@@ -207,6 +207,7 @@ export function getOperatorLeaderboard(qsos: QSO[]): OperatorStats[] {
         topBand,
         workedBands,
         workedModes,
+        bandCounts: data.bandCounts,
         pctOfTotal: parseFloat(((data.total / totalQsos) * 100).toFixed(1)),
       };
     })
@@ -256,6 +257,8 @@ export function getStationBreakdown(qsos: QSO[]): StationStats[] {
         }
       }
 
+      const workedBands = BANDS_ORDER.filter((b) => (data.bandCounts[b] || 0) > 0);
+
       return {
         name,
         totalQsos: data.total,
@@ -263,6 +266,8 @@ export function getStationBreakdown(qsos: QSO[]): StationStats[] {
         phoneQsos: data.phone,
         digitalQsos: data.digital,
         topBand,
+        workedBands,
+        bandCounts: data.bandCounts,
         pctOfTotal: parseFloat(((data.total / totalQsos) * 100).toFixed(1)),
       };
     })

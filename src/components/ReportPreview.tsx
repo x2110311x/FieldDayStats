@@ -497,56 +497,120 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               </div>
             </ErrorBoundary>
 
-            {/* Main Station Operator & Rig Breakdown Grids */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Operator Leaderboard */}
+            {/* Main Station Operator & Rig Breakdown Grids — Full-Width 100% Sections */}
+            <div className="space-y-4">
+              {/* Operator Leaderboard & Band/Mode Breakdown (Full-Width, 10+ Operators) */}
               <div className="border border-slate-300 rounded p-3 space-y-2">
-                <h3 className="text-xs font-bold text-slate-900 uppercase">Operators</h3>
-                <table className="w-full text-left text-[10px] font-mono">
-                  <thead className="bg-slate-100 text-slate-700 uppercase">
-                    <tr>
-                      <th className="p-1">Call</th>
-                      <th className="p-1 text-right">QSOs</th>
-                      <th className="p-1 text-right">Hrs</th>
-                      <th className="p-1 text-right">%</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {operatorStats.slice(0, 6).map((op) => (
-                      <tr key={op.callsign}>
-                        <td className="p-1 font-bold text-sky-800">{op.callsign}</td>
-                        <td className="p-1 text-right font-bold text-slate-900">{op.totalQsos}</td>
-                        <td className="p-1 text-right text-slate-600">{op.activeHours}h</td>
-                        <td className="p-1 text-right text-slate-600">{op.pctOfTotal}%</td>
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase">
+                    {operatorStats.length > 10 ? 'Top 10 Operators & Activity Breakdown' : 'Operator Leaderboard & Activity Breakdown'}
+                  </h3>
+                  <span className="text-[10px] font-mono text-slate-500">
+                    {operatorStats.length > 10 ? `Top 10 of ${operatorStats.length} Operators` : `${operatorStats.length} Operators Total`}
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[10px] font-mono">
+                    <thead className="bg-slate-100 text-slate-700 uppercase border-b border-slate-300">
+                      <tr>
+                        <th className="p-1.5 font-bold text-slate-900">Operator Call</th>
+                        <th className="p-1.5 text-right font-bold text-slate-900">QSOs</th>
+                        <th className="p-1.5 text-right text-slate-700">Active Hours</th>
+                        <th className="p-1.5 text-right text-slate-700 pr-6">% Share</th>
+                        <th className="p-1.5 text-left text-slate-700 pl-3">Bands Worked</th>
+                        <th className="p-1.5 text-left text-slate-700">Modes Used</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {operatorStats.slice(0, 10).map((op) => (
+                        <tr key={op.callsign} className="hover:bg-slate-50">
+                          <td className="p-1.5 font-bold text-sky-800">{op.callsign}</td>
+                          <td className="p-1.5 text-right font-bold text-slate-900">{op.totalQsos}</td>
+                          <td className="p-1.5 text-right text-slate-600">{op.activeHours} hrs</td>
+                          <td className="p-1.5 text-right text-slate-600 pr-6">{op.pctOfTotal}%</td>
+                          <td className="p-1.5 text-left pl-3">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {op.workedBands.map((b) => {
+                                const bCount = op.bandCounts ? op.bandCounts[b] : undefined;
+                                return (
+                                  <span key={b} className="px-1.5 py-0.5 text-[8.5px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300">
+                                    {b}{bCount !== undefined ? ` (${bCount})` : ''}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </td>
+                          <td className="p-1 text-left">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {op.cwQsos > 0 && (
+                                <span className="px-1 py-0.2 text-[8px] font-bold rounded bg-blue-100 text-blue-900 border border-blue-300">
+                                  CW ({op.cwQsos})
+                                </span>
+                              )}
+                              {op.phoneQsos > 0 && (
+                                <span className="px-1 py-0.2 text-[8px] font-bold rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                  SSB ({op.phoneQsos})
+                                </span>
+                              )}
+                              {op.digitalQsos > 0 && (
+                                <span className="px-1 py-0.2 text-[8px] font-bold rounded bg-amber-100 text-amber-900 border border-amber-300">
+                                  DIG ({op.digitalQsos})
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              {/* Station Breakdown */}
+              {/* Station Breakdown (Full-Width) */}
               <div className="border border-slate-300 rounded p-3 space-y-2">
-                <h3 className="text-xs font-bold text-slate-900 uppercase">Stations</h3>
-                <table className="w-full text-left text-[10px] font-mono">
-                  <thead className="bg-slate-100 text-slate-700 uppercase">
-                    <tr>
-                      <th className="p-1">Station</th>
-                      <th className="p-1 text-right">QSOs</th>
-                      <th className="p-1 text-right">CW</th>
-                      <th className="p-1 text-right">SSB</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {stationStats.slice(0, 6).map((st) => (
-                      <tr key={st.name}>
-                        <td className="p-1 font-bold text-emerald-800">{st.name}</td>
-                        <td className="p-1 text-right font-bold text-slate-900">{st.totalQsos}</td>
-                        <td className="p-1 text-right text-blue-800">{st.cwQsos}</td>
-                        <td className="p-1 text-right text-emerald-800">{st.phoneQsos}</td>
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase">Station & Rig Operations</h3>
+                  <span className="text-[10px] font-mono text-slate-500">{stationStats.length} Active Stations</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[10px] font-mono">
+                    <thead className="bg-slate-100 text-slate-700 uppercase border-b border-slate-300">
+                      <tr>
+                        <th className="p-1.5 font-bold text-slate-900">Station Name</th>
+                        <th className="p-1.5 text-right font-bold text-slate-900">Total QSOs</th>
+                        <th className="p-1.5 text-right text-blue-800">CW QSOs</th>
+                        <th className="p-1.5 text-right text-emerald-800">Phone (SSB)</th>
+                        <th className="p-1.5 text-right text-amber-800">Digital</th>
+                        <th className="p-1.5 text-right text-slate-700 pr-6">% Share</th>
+                        <th className="p-1.5 text-left text-slate-700 pl-3">Bands Worked</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {stationStats.map((st) => (
+                        <tr key={st.name} className="hover:bg-slate-50">
+                          <td className="p-1.5 font-bold text-emerald-800">{st.name}</td>
+                          <td className="p-1.5 text-right font-bold text-slate-900">{st.totalQsos}</td>
+                          <td className="p-1.5 text-right text-blue-900">{st.cwQsos}</td>
+                          <td className="p-1.5 text-right text-emerald-900">{st.phoneQsos}</td>
+                          <td className="p-1.5 text-right text-amber-900">{st.digitalQsos}</td>
+                          <td className="p-1.5 text-right text-slate-600 pr-6">{st.pctOfTotal}%</td>
+                          <td className="p-1.5 text-left pl-3">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {st.workedBands?.map((b) => {
+                                const bCount = st.bandCounts ? st.bandCounts[b] : undefined;
+                                return (
+                                  <span key={b} className="px-1.5 py-0.5 text-[8.5px] font-bold rounded bg-slate-200 text-slate-800 border border-slate-300">
+                                    {b}{bCount !== undefined ? ` (${bCount})` : ''}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

@@ -317,8 +317,12 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
         {/* Operator Leaderboard */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h3 className="text-base font-bold text-slate-100">Operator Leaderboard</h3>
-            <span className="text-xs text-slate-400 font-mono">{operatorStats.length} Operators</span>
+            <h3 className="text-base font-bold text-slate-100">
+              {operatorStats.length > 10 ? 'Top 10 Operators' : 'Operator Leaderboard'}
+            </h3>
+            <span className="text-xs text-slate-400 font-mono">
+              {operatorStats.length > 10 ? `Top 10 of ${operatorStats.length} Operators` : `${operatorStats.length} Operators`}
+            </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-300">
@@ -328,8 +332,9 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
                   <th className="p-2">Callsign</th>
                   <th className="p-2 text-right">QSOs</th>
                   <th className="p-2 text-right">Hours</th>
-                  <th className="p-2 text-right">Top Band</th>
-                  <th className="p-2 text-right">% Share</th>
+                  <th className="p-2 text-right pr-6">% Share</th>
+                  <th className="p-2 text-left pl-3">Bands Worked</th>
+                  <th className="p-2 text-left">Modes Used</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-mono">
@@ -339,7 +344,38 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
                     <td className="p-2 font-bold text-sky-400">{op.callsign}</td>
                     <td className="p-2 text-right font-bold text-slate-100">{op.totalQsos}</td>
                     <td className="p-2 text-right text-slate-400">{op.activeHours} hrs</td>
-                    <td className="p-2 text-right text-amber-400">{op.topBand}</td>
+                    <td className="p-2 text-right text-slate-400 pr-6">{op.pctOfTotal}%</td>
+                    <td className="p-2 text-left pl-3">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {op.workedBands.map((b) => {
+                          const bCount = op.bandCounts ? op.bandCounts[b] : undefined;
+                          return (
+                            <span key={b} className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-800 text-slate-300 border border-slate-700">
+                              {b}{bCount !== undefined ? ` (${bCount})` : ''}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </td>
+                    <td className="p-2 text-left">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {op.cwQsos > 0 && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-950 text-blue-300 border border-blue-800">
+                            CW ({op.cwQsos})
+                          </span>
+                        )}
+                        {op.phoneQsos > 0 && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                            SSB ({op.phoneQsos})
+                          </span>
+                        )}
+                        {op.digitalQsos > 0 && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-950 text-amber-300 border border-amber-800">
+                            DIG ({op.digitalQsos})
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-2 text-right text-slate-400">{op.pctOfTotal}%</td>
                   </tr>
                 ))}
@@ -363,7 +399,8 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
                   <th className="p-2 text-right">CW</th>
                   <th className="p-2 text-right">Phone</th>
                   <th className="p-2 text-right">Digital</th>
-                  <th className="p-2 text-right">% Share</th>
+                  <th className="p-2 text-right pr-6">% Share</th>
+                  <th className="p-2 text-left pl-3">Bands Worked</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-mono">
@@ -374,7 +411,19 @@ export const Charts: React.FC<ChartsProps> = ({ qsos, operatorStats, stationStat
                     <td className="p-2 text-right text-blue-300">{st.cwQsos}</td>
                     <td className="p-2 text-right text-emerald-300">{st.phoneQsos}</td>
                     <td className="p-2 text-right text-amber-300">{st.digitalQsos}</td>
-                    <td className="p-2 text-right text-slate-400">{st.pctOfTotal}%</td>
+                    <td className="p-2 text-right text-slate-400 pr-6">{st.pctOfTotal}%</td>
+                    <td className="p-2 text-left pl-3">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {st.workedBands?.map((b) => {
+                          const bCount = st.bandCounts ? st.bandCounts[b] : undefined;
+                          return (
+                            <span key={b} className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-800 text-slate-300 border border-slate-700">
+                              {b}{bCount !== undefined ? ` (${bCount})` : ''}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
