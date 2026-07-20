@@ -71,7 +71,6 @@
   html,
   body {
     width: 210mm !important;
-    height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -96,6 +95,20 @@
     margin: 0 !important;
     max-width: 100% !important;
     width: 100% !important;
+    /* Reset the space-y-6 gap so the nav tabs don't push content down */
+    gap: 0 !important;
+  }
+
+  /* Reset space-y gap on outer app wrapper and main */
+  main > * + * {
+    margin-top: 0 !important;
+  }
+
+  /* Hide the root flex wrapper's extra bg */
+  body > div {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   #main-report-print-container {

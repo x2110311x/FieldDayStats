@@ -4,7 +4,7 @@ import { FileUploader } from './components/FileUploader';
 import { ScoringForm } from './components/ScoringForm';
 import { Charts } from './components/Charts';
 import { SectionMap } from './components/SectionMap';
-import { PropagationMap } from './components/PropagationMap';
+import { StaticQsoMap } from './components/StaticQsoMap';
 import { LogGrid } from './components/LogGrid';
 import { ReportPreview } from './components/ReportPreview';
 import { DiagnosticsModal } from './components/DiagnosticsModal';
@@ -23,7 +23,6 @@ export function App() {
   const [config, setConfig] = useState<FieldDayConfig>(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'report'>('dashboard');
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
-  const [mapSnapshotUrl, setMapSnapshotUrl] = useState<string | null>(null);
 
   const handleMainLogLoaded = async (content: string, filename: string) => {
     const parsed = parseAdifLog(content, false);
@@ -252,13 +251,26 @@ export function App() {
                 {/* Section Scorecard Grid */}
                 <SectionMap qsos={mainQsos} />
 
-                {/* Leaflet Propagation Map */}
-                <PropagationMap
-                  qsos={mainQsos}
-                  homeGrid={config.homeGrid}
-                  homeCall={config.clubCall}
-                  onSnapshotCaptured={(url) => setMapSnapshotUrl(url)}
-                />
+                {/* Static SVG Propagation Map */}
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-100">QSO Map</h2>
+                      <p className="text-xs text-slate-400">
+                        {mainQsos.length} contacts plotted · Home: {config.homeGrid || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg overflow-hidden border border-slate-800">
+                    <StaticQsoMap
+                      qsos={mainQsos}
+                      homeGrid={config.homeGrid}
+                      homeSection={config.homeSection}
+                      homeCall={config.clubCall}
+                      dark={true}
+                    />
+                  </div>
+                </div>
 
                 {/* Interactive Main Station Log Table */}
                 <LogGrid
@@ -293,7 +305,6 @@ export function App() {
             gotaQsos={gotaQsos}
             operatorStats={mainOperatorStats}
             stationStats={mainStationStats}
-            mapSnapshotUrl={mapSnapshotUrl}
             reportType="main"
           />
         )}

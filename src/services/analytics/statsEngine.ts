@@ -187,6 +187,16 @@ export function getOperatorLeaderboard(qsos: QSO[]): OperatorStats[] {
         }
       }
 
+      // Bands sorted by standard order
+      const workedBands = BANDS_ORDER.filter((b) => (data.bandCounts[b] || 0) > 0);
+
+      // Compact mode string
+      const modeLabels: string[] = [];
+      if (data.cw > 0) modeLabels.push('CW');
+      if (data.phone > 0) modeLabels.push('SSB');
+      if (data.digital > 0) modeLabels.push('DIG');
+      const workedModes = modeLabels.join(' / ') || '—';
+
       return {
         callsign,
         totalQsos: data.total,
@@ -195,6 +205,8 @@ export function getOperatorLeaderboard(qsos: QSO[]): OperatorStats[] {
         digitalQsos: data.digital,
         activeHours: Math.max(data.hoursSet.size, 1),
         topBand,
+        workedBands,
+        workedModes,
         pctOfTotal: parseFloat(((data.total / totalQsos) * 100).toFixed(1)),
       };
     })

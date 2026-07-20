@@ -112,6 +112,8 @@ export interface OperatorStats {
   digitalQsos: number;
   activeHours: number;
   topBand: string;
+  workedBands: string[];
+  workedModes: string;
   pctOfTotal: number;
 }
 

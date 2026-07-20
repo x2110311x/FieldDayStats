@@ -8,7 +8,7 @@ interface LogGridProps {
   onDeleteSelected?: (ids: string[]) => void;
 }
 
-type SortField = 'date' | 'call' | 'band' | 'mode' | 'operator' | 'station' | 'section';
+type SortField = 'date' | 'call' | 'band' | 'mode' | 'operator' | 'station' | 'section' | 'classRcvd';
 
 export const LogGrid: React.FC<LogGridProps> = ({ qsos }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,6 +25,7 @@ export const LogGrid: React.FC<LogGridProps> = ({ qsos }) => {
         q.operator.toLowerCase().includes(term) ||
         q.station.toLowerCase().includes(term) ||
         q.section.toLowerCase().includes(term) ||
+        q.classRcvd.toLowerCase().includes(term) ||
         q.band.toLowerCase().includes(term) ||
         q.rawMode.toLowerCase().includes(term)
       );
@@ -128,6 +129,12 @@ export const LogGrid: React.FC<LogGridProps> = ({ qsos }) => {
                   {sortField === 'section' && (sortDirection === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
                 </div>
               </th>
+              <th className="p-2.5 cursor-pointer hover:text-slate-200" onClick={() => handleSort('classRcvd')}>
+                <div className="flex items-center gap-1">
+                  Class
+                  {sortField === 'classRcvd' && (sortDirection === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
+                </div>
+              </th>
               <th className="p-2.5 cursor-pointer hover:text-slate-200" onClick={() => handleSort('operator')}>
                 <div className="flex items-center gap-1">
                   Operator
@@ -152,6 +159,7 @@ export const LogGrid: React.FC<LogGridProps> = ({ qsos }) => {
                 <td className="p-2.5 font-bold text-emerald-400 font-mono">{qso.band}</td>
                 <td className="p-2.5 font-semibold text-slate-200">{qso.rawMode}</td>
                 <td className="p-2.5 font-bold text-amber-400">{qso.section}</td>
+                <td className="p-2.5 font-semibold text-violet-400 font-mono">{qso.classRcvd || '—'}</td>
                 <td className="p-2.5 font-bold text-sky-300 font-sans">{qso.operator}</td>
                 <td className="p-2.5 text-slate-400 font-sans">{qso.station}</td>
               </tr>

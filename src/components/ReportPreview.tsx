@@ -4,6 +4,7 @@ import { Printer, Download, Users, AlertCircle, Award } from 'lucide-react';
 import { OFFICIAL_ARRL_SECTIONS } from '../services/geo/arrlSections';
 import { BANDS_ORDER, buildBandModeMatrix, calculateSectionSweep, calculateActivityTimeline, getOperatorLeaderboard } from '../services/analytics/statsEngine';
 import { exportElementToPdf } from '../services/pdf/reportGenerator';
+import { StaticQsoMap } from './StaticQsoMap';
 
 interface ReportPreviewProps {
   config: FieldDayConfig;
@@ -12,7 +13,7 @@ interface ReportPreviewProps {
   gotaQsos: QSO[];
   operatorStats: OperatorStats[];
   stationStats: StationStats[];
-  mapSnapshotUrl: string | null;
+  reportType?: string;
 }
 
 export const ReportPreview: React.FC<ReportPreviewProps> = ({
@@ -22,7 +23,6 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   gotaQsos,
   operatorStats,
   stationStats,
-  mapSnapshotUrl,
 }) => {
   const hasMainQsos = mainQsos.length > 0;
   const hasGotaQsos = gotaQsos.length > 0;
@@ -129,7 +129,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
       </div>
 
       {/* A4 Report Printable Document Container */}
-      <div id={elementId} className="space-y-8 bg-slate-950 p-2 sm:p-6 rounded-xl">
+      <div id={elementId} className="space-y-8 bg-slate-950 print:bg-transparent p-2 sm:p-6 rounded-xl print:p-0 print:rounded-none">
         {/* ================= PAGE 1: Executive Summary, Score Breakdown & Full Matrix ================= */}
         <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
           <div className="space-y-5">
@@ -137,7 +137,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             <div className="border-b-2 border-slate-900 pb-3 flex items-start justify-between">
               <div>
                 <span className="text-[10px] font-extrabold tracking-widest text-sky-700 uppercase">
-                  ARRL FIELD DAY OFFICIAL OPERATIONS REPORT
+                  ARRL FIELD DAY OPERATIONS REPORT
                 </span>
                 <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none mt-1">
                   {config.clubName}
@@ -182,15 +182,14 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             <div className="bg-emerald-50 border border-emerald-200 rounded p-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-700" />
-                <span className="text-s font-bold text-emerald-950">Participation</span>
-                <span className="text-xs font-bold text-emerald-950">Operators / Total Attendees</span>
+                <span className="text-xs font-bold text-emerald-950">Participation</span>
               </div>
               <div className="text-xs font-mono font-bold text-emerald-800">
                 {participationIndex}% ({uniqueOpCount} operators / {totalParticipants} attendees)
               </div>
             </div>
 
-            {/* Official Score Calculation Breakdown */}
+            {/* Score Calculation Breakdown */}
             <div className="border border-slate-300 rounded p-3 space-y-2">
               <h3 className="text-xs font-bold text-slate-900 uppercase">ARRL Field Day Score Breakdown</h3>
               <div className="grid grid-cols-2 gap-4 text-xs font-mono">
@@ -282,28 +281,60 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
             </div>
 
-            {/* Full-Width Hourly Activity Velocity Timeline Bar Chart */}
-            <div className="border border-slate-300 rounded p-4 space-y-3">
+            {/* Full-Width Hourly Activity Velocity Timeline — SVG Bar Chart (print-safe) */}
+            <div className="border border-slate-300 rounded p-4 space-y-2">
               <h3 className="text-xs font-bold text-slate-900 uppercase">Activity Graph</h3>
-              <div className="h-44 flex items-end justify-between gap-1 pt-6 border-b border-slate-300 pb-2">
-                {timeline.bins.map((bin, i) => {
-                  const maxCount = timeline.peakHourlyRate || 1;
-                  const heightPct = Math.max((bin.qsoCount / maxCount) * 100, 4);
+              {(() => {
+                const svgH = 120;
+                const barAreaH = 80;
+                const labelH = 20;
+                const countH = 14;
+                const bins = timeline.bins;
+                const maxCount = timeline.peakHourlyRate || 1;
+                const n = bins.length || 1;
+                const barW = Math.max(1, Math.floor(700 / n) - 2);
+                const gap = Math.max(1, Math.floor(700 / n) - barW);
+                const totalW = n * (barW + gap);
 
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-                      <span className="text-[8px] font-mono font-bold text-slate-700">{bin.qsoCount > 0 ? bin.qsoCount : ''}</span>
-                      <div
-                        className="w-full bg-sky-600 rounded-t transition-all"
-                        style={{ height: `${heightPct}%` }}
-                      />
-                      <span className="text-[7px] font-mono text-slate-500 rotate-45 origin-left whitespace-nowrap mt-1">
-                        {bin.timeLabel.split(' ')[0]}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                return (
+                  <svg
+                    viewBox={`0 0 ${totalW} ${svgH}`}
+                    width="100%"
+                    style={{ display: 'block', overflow: 'visible' }}
+                    preserveAspectRatio="xMidYMid meet"
+                  >
+                    {/* baseline */}
+                    <line x1="0" y1={countH + barAreaH} x2={totalW} y2={countH + barAreaH} stroke="#cbd5e1" strokeWidth="1" />
+                    {bins.map((bin, i) => {
+                      const barH = Math.max(2, Math.round((bin.qsoCount / maxCount) * barAreaH));
+                      const x = i * (barW + gap);
+                      const y = countH + barAreaH - barH;
+                      const label = bin.timeLabel.split(' ')[0];
+                      return (
+                        <g key={i}>
+                          <rect x={x} y={y} width={barW} height={barH} fill="#0284c7" rx="1" />
+                          {bin.qsoCount > 0 && (
+                            <text x={x + barW / 2} y={y - 2} textAnchor="middle" fontSize="7" fill="#1e293b" fontFamily="monospace" fontWeight="bold">
+                              {bin.qsoCount}
+                            </text>
+                          )}
+                          <text
+                            x={x + barW / 2}
+                            y={countH + barAreaH + labelH}
+                            textAnchor="start"
+                            fontSize="6"
+                            fill="#94a3b8"
+                            fontFamily="monospace"
+                            transform={`rotate(40, ${x + barW / 2}, ${countH + barAreaH + 4})`}
+                          >
+                            {label}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                );
+              })()}
             </div>
 
             {/* Side-by-Side Mode & Band Pie Charts */}
@@ -434,16 +465,21 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
             </div>
 
-            {/* Embedded Live Map Snapshot */}
-            <div className="border-2 border-slate-900 rounded-md overflow-hidden bg-slate-950 h-[340px] relative flex items-center justify-center">
-              {mapSnapshotUrl ? (
-                <img src={mapSnapshotUrl} alt="Geodetic Propagation Map Snapshot" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-slate-400 text-xs text-center p-4">
-                  <div className="font-mono text-sky-400 mb-1">[Map Snapshot Image Rendered Automatically]</div>
-                  QSO Map from {config.homeGrid || 'FN31'} across US, Canada, and DX entities
-                </div>
-              )}
+            {/* Static SVG QSO Map — print-safe, no Leaflet/tiles */}
+            <div className="border border-slate-300 rounded overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200 bg-slate-50">
+                <h3 className="text-xs font-bold text-slate-900 uppercase">QSO Propagation Map</h3>
+                <span className="text-[10px] font-mono text-slate-500">
+                  Home: {config.homeGrid || 'N/A'} · {config.homeSection || 'N/A'} · {displayQsos.length} QSOs
+                </span>
+              </div>
+              <StaticQsoMap
+                qsos={displayQsos}
+                homeGrid={config.homeGrid}
+                homeSection={config.homeSection}
+                homeCall={clubCall}
+                dark={false}
+              />
             </div>
 
             {/* Main Station Operator & Rig Breakdown Grids */}
