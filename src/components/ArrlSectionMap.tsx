@@ -27,24 +27,58 @@ const CAN_PROVINCE_SECTIONS: Record<string, string> = {
   'Nunavut':                   'TER',
 };
 
-// Distinct colours per ARRL division for the worked-state choropleth
-const DIVISION_COLORS: Record<string, string> = {
-  'New England':   '#6366f1',
-  'Hudson':        '#8b5cf6',
-  'Atlantic':      '#a855f7',
-  'Southeastern':  '#22c55e',
-  'Delta':         '#16a34a',
-  'Roanoke':       '#4ade80',
-  'Great Lakes':   '#3b82f6',
-  'Central':       '#06b6d4',
-  'Midwest':       '#0891b2',
-  'Dakota':        '#0284c7',
-  'Rocky Mountain':'#f59e0b',
-  'Pacific':       '#f97316',
-  'Northwestern':  '#ef4444',
-  'Southwestern':  '#ec4899',
-  'RAC':           '#eab308', // Warm vibrant yellow for RAC / Canada Division
-  'International': '#94a3b8',
+// Mapping ARRL/RAC Section codes to US Call Sign Area Districts (0-9, Canada, DX)
+const SECTION_CALL_AREA: Record<string, string> = {
+  // Call Area 1 (New England)
+  'CT': '1', 'EMA': '1', 'ME': '1', 'NH': '1', 'RI': '1', 'VT': '1', 'WMA': '1',
+
+  // Call Area 2 (NY / NJ)
+  'ENY': '2', 'NLI': '2', 'NNJ': '2', 'NNY': '2', 'SNJ': '2', 'WNY': '2',
+
+  // Call Area 3 (PA / DE / MD)
+  'DE': '3', 'EPA': '3', 'MDC': '3', 'WPA': '3',
+
+  // Call Area 4 (South / Southeast)
+  'AL': '4', 'GA': '4', 'KY': '4', 'NC': '4', 'NFL': '4', 'PR': '4', 'SC': '4', 'SFL': '4', 'TN': '4', 'VA': '4', 'VI': '4', 'WCF': '4',
+
+  // Call Area 5 (South / Central)
+  'AR': '5', 'LA': '5', 'MS': '5', 'NM': '5', 'NTX': '5', 'OK': '5', 'STX': '5', 'WTX': '5',
+
+  // Call Area 6 (California & Pacific)
+  'EB': '6', 'LAX': '6', 'ORG': '6', 'PAC': '6', 'SB': '6', 'SCV': '6', 'SDG': '6', 'SF': '6', 'SJV': '6', 'SV': '6',
+
+  // Call Area 7 (Northwest & West)
+  'AK': '7', 'AZ': '7', 'EWA': '7', 'ID': '7', 'MT': '7', 'NV': '7', 'OR': '7', 'UT': '7', 'WWA': '7', 'WY': '7',
+
+  // Call Area 8 (Great Lakes - MI, OH, WV)
+  'MI': '8', 'OH': '8', 'WV': '8',
+
+  // Call Area 9 (Midwest - IL, IN, WI)
+  'IL': '9', 'IN': '9', 'WI': '9',
+
+  // Call Area 0 (Plains - CO, IA, KS, MN, MO, ND, NE, SD)
+  'CO': '0', 'IA': '0', 'KS': '0', 'MN': '0', 'MO': '0', 'ND': '0', 'NE': '0', 'SD': '0',
+
+  // Canada / RAC
+  'AB': 'Canada', 'BC': 'Canada', 'GH': 'Canada', 'MB': 'Canada', 'NB': 'Canada',
+  'NL': 'Canada', 'NS': 'Canada', 'ONE': 'Canada', 'ONN': 'Canada', 'ONS': 'Canada',
+  'PE': 'Canada', 'QC': 'Canada', 'SK': 'Canada', 'TER': 'Canada',
+};
+
+// Vibrant colors per Call Sign District
+const CALL_AREA_COLORS: Record<string, string> = {
+  '1':      '#6366f1', // Indigo
+  '2':      '#8b5cf6', // Purple
+  '3':      '#a855f7', // Violet
+  '4':      '#10b981', // Emerald
+  '5':      '#22c55e', // Green
+  '6':      '#ec4899', // Pink
+  '7':      '#ef4444', // Red
+  '8':      '#3b82f6', // Blue
+  '9':      '#06b6d4', // Cyan
+  '0':      '#0284c7', // Sky Blue
+  'Canada': '#eab308', // Warm Yellow
+  'DX':     '#f59e0b', // Amber
 };
 
 // Exact merged cartographic coastline outline SVG Path for Puerto Rico
@@ -78,24 +112,15 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
     return geoAlbersUsa().scale(900).translate([480, 250]);
   }, []);
 
-  // Section code → division
-  const sectionMeta = useMemo(() => {
-    const map = new Map<string, { division: string; name: string }>();
-    for (const sec of OFFICIAL_ARRL_SECTIONS) {
-      map.set(sec.code.toUpperCase(), { division: sec.division, name: sec.name });
-    }
-    return map;
-  }, []);
-
   // ── Theme ───────────────────────────────────────────────────────────────────
   const bg           = dark ? '#0f172a' : '#f1f5f9';
   const unworkedFill = dark ? '#1e293b' : '#ffffff';
   const strokeColor  = dark ? '#475569' : '#64748b';
 
   const getSectionColor = (sectionCode: string) => {
-    const meta = sectionMeta.get(sectionCode);
-    if (!meta) return unworkedFill;
-    return DIVISION_COLORS[meta.division] || '#94a3b8';
+    const code = sectionCode.toUpperCase();
+    const area = SECTION_CALL_AREA[code] || 'DX';
+    return CALL_AREA_COLORS[area] || '#94a3b8';
   };
 
   return (
@@ -156,7 +181,7 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
                     <g key={`can-${geo.rsmKey}`}>
                       {ontSections.map(sec => {
                         const worked = workedSections.has(sec.code);
-                        const fill = worked ? DIVISION_COLORS['RAC'] : unworkedFill;
+                        const fill = worked ? CALL_AREA_COLORS['Canada'] : unworkedFill;
 
                         return (
                           <g key={sec.code} clipPath={sec.clip}>
@@ -175,7 +200,7 @@ export const ArrlSectionMap: React.FC<ArrlSectionMapProps> = ({
                 }
 
                 const worked = sectionCode ? workedSections.has(sectionCode) : false;
-                const fill = worked ? DIVISION_COLORS['RAC'] : unworkedFill;
+                const fill = worked ? CALL_AREA_COLORS['Canada'] : unworkedFill;
 
                 return (
                   <Geography
