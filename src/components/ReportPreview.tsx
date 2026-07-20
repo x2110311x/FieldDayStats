@@ -105,7 +105,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
       {/* Export Toolbar */}
       <div className="no-print bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-bold text-slate-100">Official Field Day Operations Report</h2>
+          <h2 className="text-sm font-bold text-slate-100">Field Day Operations Report</h2>
           <p className="text-xs text-slate-400">
             Click <strong className="text-sky-400">Print / Save as PDF</strong> for browser print, or <strong className="text-sky-400">Download PDF File</strong> for direct file download.
           </p>
@@ -192,7 +192,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
             {/* Official Score Calculation Breakdown */}
             <div className="border border-slate-300 rounded p-3 space-y-2">
-              <h3 className="text-xs font-bold text-slate-900 uppercase">ARRL Official Field Day Score Breakdown</h3>
+              <h3 className="text-xs font-bold text-slate-900 uppercase">ARRL Field Day Score Breakdown</h3>
               <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                 <div className="space-y-1 border-r border-slate-200 pr-3">
                   <div className="flex justify-between"><span>Phone QSOs ({phoneCount} × 1 pt):</span> <span>{phoneCount} pts</span></div>

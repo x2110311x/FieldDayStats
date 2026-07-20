@@ -92,6 +92,9 @@ export interface ScoreBreakdown {
   uniqueOperators: number;
   totalAttendance: number;
   participationIndexPct: number;
+
+  sectionsWorked: number;
+  sweepPercentage: number;
 }
 
 export interface BandModeMatrixCell {

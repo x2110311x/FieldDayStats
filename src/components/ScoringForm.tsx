@@ -235,7 +235,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
         >
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-400" />
-            Official Bonus Points Checklist for Class {combinedClassCode}
+            Bonus Points Checklist for Class {combinedClassCode}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-amber-400 font-semibold">Click to toggle bonus options</span>

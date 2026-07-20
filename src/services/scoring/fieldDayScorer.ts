@@ -138,6 +138,16 @@ export function calculateFieldDayScore(
   const totalAttendance = Math.max(config.totalParticipants, uniqueOperators);
   const participationIndexPct = parseFloat(((uniqueOperators / totalAttendance) * 100).toFixed(1));
 
+  // Section Sweep (86 ARRL sections total)
+  const uniqueSectionsSet = new Set<string>();
+  for (const qso of allQsos) {
+    if (qso.section && qso.section.trim() !== '') {
+      uniqueSectionsSet.add(qso.section.toUpperCase().trim());
+    }
+  }
+  const sectionsWorked = uniqueSectionsSet.size;
+  const sweepPercentage = parseFloat(((sectionsWorked / 86) * 100).toFixed(1));
+
   return {
     phoneQsos,
     cwQsos,
@@ -157,5 +167,7 @@ export function calculateFieldDayScore(
     uniqueOperators,
     totalAttendance,
     participationIndexPct,
+    sectionsWorked,
+    sweepPercentage,
   };
 }

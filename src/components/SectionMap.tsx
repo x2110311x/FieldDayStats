@@ -22,7 +22,7 @@ export const SectionMap: React.FC<SectionMapProps> = ({ qsos }) => {
           <div>
             <h2 className="text-base font-bold text-slate-100">86-Section Sweep Scorecard (2026 Edition)</h2>
             <p className="text-xs text-slate-400">
-              Official ARRL Section completion scorecard and geographic distribution
+              ARRL Section completion scorecard
             </p>
           </div>
         </div>
@@ -69,7 +69,7 @@ export const SectionMap: React.FC<SectionMapProps> = ({ qsos }) => {
       {/* 86 Section Scorecard Grid */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
-          <span>Official Section Check-Off Grid ({OFFICIAL_ARRL_SECTIONS.length} Total)</span>
+          <span>Section Check-Off Grid ({OFFICIAL_ARRL_SECTIONS.length} Total)</span>
           <div className="flex items-center gap-3 text-[11px]">
             <span className="flex items-center gap-1 text-emerald-400">
               <CheckCircle className="w-3.5 h-3.5" /> Worked

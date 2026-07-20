@@ -11,7 +11,7 @@ import { DiagnosticsModal } from './components/DiagnosticsModal';
 import { FieldDayConfig, QSO } from './types';
 import { DEFAULT_CONFIG, SAMPLE_CONFIG, SAMPLE_MAIN_ADIF, SAMPLE_GOTA_ADIF } from './constants';
 import { parseAdifLog, extractLogMetadata } from './services/parser/adifParser';
-import { calculateFieldDayScore } from './services/analytics/scoreCalculator';
+import { calculateFieldDayScore } from './services/scoring/fieldDayScorer';
 import { getOperatorLeaderboard, getStationBreakdown } from './services/analytics/statsEngine';
 import { lookupCallsign } from './services/geo/callsignLookup';
 import { exportElementToPdf } from './services/pdf/reportGenerator';
@@ -125,8 +125,8 @@ export function App() {
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition ${activeTab === 'dashboard'
-                ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
-                : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
+              : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -136,8 +136,8 @@ export function App() {
           <button
             onClick={() => setActiveTab('report')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition ${activeTab === 'report'
-                ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
-                : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
+              : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
           >
             <FileText className="w-4 h-4" />
@@ -173,13 +173,13 @@ export function App() {
 
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 shadow-md">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Main Station Contacts
+                  Total QSOs
                 </span>
                 <span className="text-xl font-black text-emerald-400 font-mono">
                   {mainQsos.length.toLocaleString()}
                 </span>
                 <span className="text-[10px] text-slate-500 block mt-0.5 font-mono">
-                  {score.qsoPoints} Multiplied Points
+                  {score.rawQsoPoints} Multiplied Points
                 </span>
               </div>
 
@@ -203,7 +203,7 @@ export function App() {
                   {score.participationIndexPct}%
                 </span>
                 <span className="text-[10px] text-slate-500 block mt-0.5 font-mono">
-                  {score.uniqueOperators} Ops / {score.totalAttendance} Attendees
+                  {score.uniqueOperators} Operators / {score.totalAttendance} Attendees
                 </span>
               </div>
 

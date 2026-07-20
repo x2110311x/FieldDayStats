@@ -93,7 +93,7 @@ export function runAnalyticsDiagnostics(): DiagnosticResult[] {
   // Total Score = 20 + 460 = 480 pts.
 
   results.push({
-    name: 'Official ARRL Score Calculation',
+    name: 'ARRL Score Calculation',
     passed: score.totalScore === 480 && score.multipliedQsoPoints === 20,
     expected: '480 Total Points (20 Multiplied QSO + 460 Bonus)',
     actual: `${score.totalScore} Total Points (${score.multipliedQsoPoints} Multiplied QSO + ${score.totalBonusPoints} Bonus)`,
@@ -119,7 +119,7 @@ export function runAnalyticsDiagnostics(): DiagnosticResult[] {
     passed: sweep.workedCount === 5,
     expected: '5 Worked Sections (CT, EMA, STX, ONE, LAX)',
     actual: `${sweep.workedCount} Worked Sections`,
-    details: 'Calculated unique ARRL/RAC section sweep ratio out of 85 official sections.',
+    details: 'Calculated unique ARRL/RAC section sweep ratio out of 86 sections.',
   });
 
   // Test 6: Maidenhead Coordinates Resolution
