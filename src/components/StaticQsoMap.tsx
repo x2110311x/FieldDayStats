@@ -5,7 +5,6 @@ import {
   Geography,
   Line,
   Marker,
-  ZoomableGroup,
 } from 'react-simple-maps';
 import { QSO } from '../types';
 import { resolveQsoCoordinates, gridToLatLng } from '../services/geo/maidenhead';
@@ -13,6 +12,8 @@ import { ARRL_SECTION_MAP } from '../services/geo/arrlSections';
 
 // Natural Earth TopoJSON — world countries
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+
+const BAND_ORDER = ['160M', '80M', '40M', '20M', '15M', '10M', '6M', '2M', '70CM', 'OTH'];
 
 const BAND_COLORS: Record<string, string> = {
   '160M': '#9333ea',
@@ -25,6 +26,16 @@ const BAND_COLORS: Record<string, string> = {
   '2M':   '#8b5cf6',
   '70CM': '#6366f1',
   'OTH':  '#64748b',
+};
+
+export type ModeGroup = 'CW' | 'PHONE' | 'DIGITAL';
+
+export const normalizeModeGroup = (rawMode?: string): ModeGroup => {
+  if (!rawMode) return 'PHONE';
+  const m = rawMode.toUpperCase();
+  if (m === 'CW') return 'CW';
+  if (m === 'PHONE' || m === 'SSB' || m === 'FM' || m === 'AM' || m === 'PH') return 'PHONE';
+  return 'DIGITAL';
 };
 
 interface StaticQsoMapProps {
@@ -56,16 +67,17 @@ export const StaticQsoMap: React.FC<StaticQsoMapProps> = ({
     );
   }, [homeGrid, homeSection]);
 
-  // ── Aggregate QSO contacts by location ───────────────────────────────────────
+  // ── Aggregate QSO contacts by location, band, & mode ──────────────────────────
   const contacts = useMemo(() => {
-    const map = new Map<string, { lat: number; lng: number; band: string; count: number; isDx: boolean }>();
+    const map = new Map<string, { lat: number; lng: number; band: string; modeGroup: ModeGroup; count: number; isDx: boolean }>();
     for (const qso of qsos) {
       const coords = resolveQsoCoordinates(qso.grid, qso.section, qso.call);
       if (!coords) continue;
       const isDx = qso.section?.toUpperCase() === 'DX';
-      const key = `${coords.lat.toFixed(1)}_${coords.lng.toFixed(1)}`;
+      const modeGroup = normalizeModeGroup(qso.mode);
+      const key = `${coords.lat.toFixed(1)}_${coords.lng.toFixed(1)}_${qso.band}_${modeGroup}`;
       if (!map.has(key)) {
-        map.set(key, { lat: coords.lat, lng: coords.lng, band: qso.band, count: 1, isDx });
+        map.set(key, { lat: coords.lat, lng: coords.lng, band: qso.band, modeGroup, count: 1, isDx });
       } else {
         map.get(key)!.count++;
       }
@@ -73,10 +85,11 @@ export const StaticQsoMap: React.FC<StaticQsoMapProps> = ({
     return Array.from(map.values());
   }, [qsos]);
 
-  const activeBands = useMemo(
-    () => [...new Set(contacts.map(c => c.band))].filter(b => BAND_COLORS[b]),
-    [contacts]
-  );
+  // Sort active bands in standard lowest-to-highest frequency ham band order
+  const activeBands = useMemo(() => {
+    const bandSet = new Set(contacts.map(c => c.band));
+    return BAND_ORDER.filter(b => bandSet.has(b));
+  }, [contacts]);
 
   // ── Dynamic bounds auto-fit using Mercator projection math ────────────────────
   const { center, scale } = useMemo(() => {
@@ -126,7 +139,7 @@ export const StaticQsoMap: React.FC<StaticQsoMapProps> = ({
   const bg         = dark ? '#0f172a' : '#dbeafe';   // ocean colour
   const landFill   = dark ? '#1e293b' : '#f1f5f9';
   const landStroke = dark ? '#334155' : '#94a3b8';
-  const textColor  = dark ? '#64748b' : '#64748b';
+  const textColor  = dark ? '#94a3b8' : '#475569';
 
   return (
     <div style={{ position: 'relative', background: bg, borderRadius: 4, overflow: 'hidden' }}>
@@ -179,26 +192,45 @@ export const StaticQsoMap: React.FC<StaticQsoMapProps> = ({
             );
           })}
 
-          {/* DX lines — dashed amber */}
-          {contacts.filter(c => c.isDx).map((c, i) => (
-            <Line
-              key={`dxline-${i}`}
-              from={[homeLatLng.lng, homeLatLng.lat]}
-              to={[c.lng, c.lat]}
-              stroke="#f59e0b"
-              strokeWidth={1.2}
-              strokeOpacity={0.7}
-              strokeDasharray="5,3"
-            />
-          ))}
+          {/* DX lines — dashed, matched to band color */}
+          {contacts.filter(c => c.isDx).map((c, i) => {
+            const color = BAND_COLORS[c.band] || '#38bdf8';
+            return (
+              <Line
+                key={`dxline-${i}`}
+                from={[homeLatLng.lng, homeLatLng.lat]}
+                to={[c.lng, c.lat]}
+                stroke={color}
+                strokeWidth={1.2}
+                strokeOpacity={0.8}
+                strokeDasharray="5,3"
+              />
+            );
+          })}
 
-          {/* Contact dots */}
+          {/* Contact Markers (Distinct SVG Shapes per Mode: Phone = Circle, CW = Square, Digital = Triangle) */}
           {contacts.map((c, i) => {
-            const color = c.isDx ? '#f59e0b' : (BAND_COLORS[c.band] || '#38bdf8');
-            const r = Math.min(6, 3 + Math.log2(c.count + 1) * 0.8);
+            const color = BAND_COLORS[c.band] || '#38bdf8';
+            const r = Math.min(5.5, 2.8 + Math.log2(c.count + 1) * 0.8);
+
             return (
               <Marker key={`dot-${i}`} coordinates={[c.lng, c.lat]}>
-                <circle r={r} fill={color} stroke="white" strokeWidth={0.8} opacity={0.9} />
+                {c.modeGroup === 'CW' ? (
+                  // CW = Square
+                  <rect x={-r} y={-r} width={r * 2} height={r * 2} rx={1} fill={color} stroke="white" strokeWidth={0.8} opacity={0.9} />
+                ) : c.modeGroup === 'DIGITAL' ? (
+                  // Digital = Triangle
+                  <polygon
+                    points={`0,${-r * 1.3} ${r * 1.15},${r * 0.85} ${-r * 1.15},${r * 0.85}`}
+                    fill={color}
+                    stroke="white"
+                    strokeWidth={0.8}
+                    opacity={0.9}
+                  />
+                ) : (
+                  // Phone = Circle (default)
+                  <circle r={r} fill={color} stroke="white" strokeWidth={0.8} opacity={0.9} />
+                )}
               </Marker>
             );
           })}
@@ -223,23 +255,38 @@ export const StaticQsoMap: React.FC<StaticQsoMapProps> = ({
         </g>
       </ComposableMap>
 
-      {/* Band legend overlay */}
+      {/* Legend Stack (Bottom-Left Corner: Mode legend on top, Band legend below) */}
       <div style={{
-        position: 'absolute', bottom: 4, left: 6,
-        display: 'flex', gap: 8, flexWrap: 'wrap',
+        position: 'absolute', bottom: 6, left: 6,
+        display: 'flex', flexDirection: 'column', gap: 3,
+        background: dark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+        padding: '4px 8px', borderRadius: 4, backdropFilter: 'blur(4px)',
+        border: dark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
       }}>
-        {activeBands.slice(0, 10).map(band => (
-          <span key={band} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, fontFamily: 'monospace', color: textColor }}>
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: BAND_COLORS[band] }} />
-            {band}
+        {/* Row 1: Mode shapes legend */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 9, fontFamily: 'monospace', color: textColor }}>
+          <span style={{ fontWeight: 'bold' }}>Mode:</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <svg width={8} height={8} viewBox="-5 -5 10 10"><circle r={4} fill={textColor} /></svg> Phone
           </span>
-        ))}
-        {contacts.some(c => c.isDx) && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, fontFamily: 'monospace', color: textColor }}>
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#f59e0b' }} />
-            DX
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <svg width={8} height={8} viewBox="-5 -5 10 10"><rect x={-4} y={-4} width={8} height={8} rx={1} fill={textColor} /></svg> CW
           </span>
-        )}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <svg width={8} height={8} viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4 -4.5,4" fill={textColor} /></svg> Digital
+          </span>
+        </div>
+
+        {/* Row 2: Band colors legend (Sorted 160M -> 80M -> 40M -> 20M -> 15M -> 10M -> 6M -> 2M -> 70CM) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 9, fontFamily: 'monospace', color: textColor }}>
+          <span style={{ fontWeight: 'bold' }}>Band:</span>
+          {activeBands.map(band => (
+            <span key={band} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: 2, background: BAND_COLORS[band] }} />
+              {band}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
