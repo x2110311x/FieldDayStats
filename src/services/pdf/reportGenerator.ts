@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 
 /**
  * Aspect-Ratio Preserving Client-Side PDF Exporter.
- * Uses a File object Blob URL to guarantee Chrome preserves the exact target filename & .pdf extension.
+ * Uses high-DPI canvas rendering with explicit width handling to prevent text & badge truncation.
  */
 export async function exportElementToPdf(elementId: string, filename: string): Promise<void> {
   const container = document.getElementById(elementId);
@@ -32,13 +32,12 @@ export async function exportElementToPdf(elementId: string, filename: string): P
         const pageEl = pages[i] as HTMLElement;
 
         const canvas = await html2canvas(pageEl, {
-          scale: 2, // 2x high resolution canvas
+          scale: 2, // 2x resolution canvas
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
-          width: 794,
-          height: 1123,
+          windowWidth: 1280,
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -58,6 +57,7 @@ export async function exportElementToPdf(elementId: string, filename: string): P
         allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
+        windowWidth: 1280,
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -67,9 +67,7 @@ export async function exportElementToPdf(elementId: string, filename: string): P
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfPageWidth, Math.min(renderHeight, pdfPageHeight));
     }
 
-    // Try jsPDF built-in save first
     pdf.save(cleanFilename);
-
   } catch (err) {
     console.error('jsPDF save error, using File object fallback:', err);
     try {

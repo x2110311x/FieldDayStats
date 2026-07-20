@@ -107,7 +107,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             Field Day Operations Report
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Click <strong className="text-sky-400 font-semibold">Print / Save as PDF</strong> to launch your browser print window. Select <strong className="text-sky-400 font-mono">"Save as PDF"</strong> as your printer destination to download your vector PDF copy.
+            Click <strong className="text-sky-400 font-semibold">Print / Save as PDF</strong> to launch your browser print window. Select <strong className="text-sky-400 font-mono">"Save as PDF"</strong> as your printer destination to download a PDF copy.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
