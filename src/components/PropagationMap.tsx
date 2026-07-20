@@ -4,7 +4,7 @@ import html2canvas from 'html2canvas';
 import { QSO } from '../types';
 import { gridToLatLng, resolveQsoCoordinates, calculateGreatCircleDistance, LatLng } from '../services/geo/maidenhead';
 import { ARRL_SECTION_MAP } from '../services/geo/arrlSections';
-import { MapPin, Camera } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 interface PropagationMapProps {
   qsos: QSO[];
@@ -40,7 +40,7 @@ export const PropagationMap: React.FC<PropagationMapProps> = ({
     gridToLatLng(homeGrid) ||
     (homeGrid && ARRL_SECTION_MAP.has(homeGrid.toUpperCase())
       ? { lat: ARRL_SECTION_MAP.get(homeGrid.toUpperCase())!.lat, lng: ARRL_SECTION_MAP.get(homeGrid.toUpperCase())!.lng }
-      : { lat: 41.5, lng: -81.5 }); // Default Ohio / Great Lakes center
+      : { lat: 41.5, lng: -81.5 }); // Default Great Lakes / US Center
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -59,7 +59,7 @@ export const PropagationMap: React.FC<PropagationMapProps> = ({
 
     mapInstanceRef.current = map;
 
-    // Dark-mode Mapbox / CartoDB tile layer
+    // Dark-mode CartoDB tile layer
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 18,
       subdomains: 'abcd',
@@ -77,12 +77,17 @@ export const PropagationMap: React.FC<PropagationMapProps> = ({
       .addTo(map)
       .bindPopup(`<b>HOME STATION (${homeCall || 'MY SITE'})</b><br/>Grid: ${homeGrid || 'N/A'}`);
 
+    // Track bounding box coordinates across all QSOs
+    const bounds = L.latLngBounds([homeCoords.lat, homeCoords.lng]);
+
     // Map each contact to coordinates
     const targetMap = new Map<string, { lat: number; lng: number; call: string; band: string; section: string; count: number; dist: number }>();
 
     for (const qso of qsos) {
       const coords = resolveQsoCoordinates(qso.grid, qso.section, qso.call);
       if (coords) {
+        bounds.extend([coords.lat, coords.lng]);
+
         const key = `${coords.lat.toFixed(2)}_${coords.lng.toFixed(2)}`;
         const dist = calculateGreatCircleDistance(homeCoords.lat, homeCoords.lng, coords.lat, coords.lng);
 
@@ -134,26 +139,36 @@ export const PropagationMap: React.FC<PropagationMapProps> = ({
         .bindPopup(`<b>${target.call}</b> (${target.section})<br/>Band: ${target.band}<br/>Distance: ${target.dist} km`);
     });
 
+    // Fit map view bounds so ALL QSOs fit on screen without being cut off
+    if (targetMap.size > 0) {
+      map.fitBounds(bounds, {
+        padding: [30, 30],
+        maxZoom: 7,
+      });
+    }
+
+    // Auto-capture map snapshot after tile rendering & fitBounds completes
+    const captureTimer = setTimeout(async () => {
+      if (!mapContainerRef.current) return;
+      try {
+        const canvas = await html2canvas(mapContainerRef.current, { useCORS: true, logging: false });
+        const url = canvas.toDataURL('image/png');
+        if (onSnapshotCaptured) {
+          onSnapshotCaptured(url);
+        }
+      } catch (e) {
+        console.error('Auto snapshot capture error:', e);
+      }
+    }, 1200);
+
     return () => {
+      clearTimeout(captureTimer);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
     };
   }, [qsos, homeGrid, homeCall]);
-
-  const handleCaptureSnapshot = async () => {
-    if (!mapContainerRef.current) return;
-    try {
-      const canvas = await html2canvas(mapContainerRef.current, { useCORS: true, logging: false });
-      const url = canvas.toDataURL('image/png');
-      if (onSnapshotCaptured) {
-        onSnapshotCaptured(url);
-      }
-    } catch (e) {
-      console.error('Snapshot capture error:', e);
-    }
-  };
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
@@ -163,18 +178,10 @@ export const PropagationMap: React.FC<PropagationMapProps> = ({
           <div>
             <h2 className="text-base font-bold text-slate-100">Geodetic Propagation Map</h2>
             <p className="text-xs text-slate-400">
-              Great-circle propagation paths to all contacted US, RAC, and International DX stations
+              Great-circle propagation paths auto-scaled to fit all contacted stations
             </p>
           </div>
         </div>
-
-        <button
-          onClick={handleCaptureSnapshot}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-        >
-          <Camera className="w-4 h-4 text-sky-400" />
-          Capture Snapshot for PDF
-        </button>
       </div>
 
       <div className="h-80 w-full rounded-lg overflow-hidden border border-slate-800 relative shadow-inner">

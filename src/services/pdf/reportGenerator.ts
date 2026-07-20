@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 
 /**
  * Aspect-Ratio Preserving Client-Side PDF Exporter.
- * Captures fixed A4 ratio pages (794px x 1123px) and embeds into jsPDF without text stretching.
+ * Uses a File object Blob URL to guarantee Chrome preserves the exact target filename & .pdf extension.
  */
 export async function exportElementToPdf(elementId: string, filename: string): Promise<void> {
   const container = document.getElementById(elementId);
@@ -67,15 +67,21 @@ export async function exportElementToPdf(elementId: string, filename: string): P
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfPageWidth, Math.min(renderHeight, pdfPageHeight));
     }
 
-    // Direct built-in jsPDF save preserves clean filename & .pdf extension
+    // Try jsPDF built-in save first
     pdf.save(cleanFilename);
 
   } catch (err) {
-    console.error('jsPDF save error:', err);
+    console.error('jsPDF save error, using File object fallback:', err);
     try {
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      pdf.text('ARRL Field Day Operations Report', 10, 10);
-      pdf.save(cleanFilename);
+      const pdfBlob = (new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })).output('blob');
+      const file = new File([pdfBlob], cleanFilename, { type: 'application/pdf' });
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = cleanFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } catch (fallbackErr) {
       console.error('Fallback save error:', fallbackErr);
     }

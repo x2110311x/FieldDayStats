@@ -1,8 +1,8 @@
 import React from 'react';
-import { QSO, FieldDayConfig, ScoreBreakdown, OperatorStats, StationStats } from '../types';
-import { BANDS_ORDER, buildBandModeMatrix, calculateSectionSweep, calculateActivityTimeline } from '../services/analytics/statsEngine';
+import { FieldDayConfig, QSO, OperatorStats, StationStats, ScoreBreakdown } from '../types';
+import { Printer, Download, Users, AlertCircle, Award } from 'lucide-react';
 import { OFFICIAL_ARRL_SECTIONS } from '../services/geo/arrlSections';
-import { Printer, Download } from 'lucide-react';
+import { BANDS_ORDER, buildBandModeMatrix, calculateSectionSweep, calculateActivityTimeline, getOperatorLeaderboard } from '../services/analytics/statsEngine';
 import { exportElementToPdf } from '../services/pdf/reportGenerator';
 
 interface ReportPreviewProps {
@@ -12,8 +12,7 @@ interface ReportPreviewProps {
   gotaQsos: QSO[];
   operatorStats: OperatorStats[];
   stationStats: StationStats[];
-  mapSnapshotUrl?: string;
-  reportType: 'main' | 'gota';
+  mapSnapshotUrl: string | null;
 }
 
 export const ReportPreview: React.FC<ReportPreviewProps> = ({
@@ -24,571 +23,595 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   operatorStats,
   stationStats,
   mapSnapshotUrl,
-  reportType,
 }) => {
-  const allQsos = reportType === 'gota' ? gotaQsos : [...mainQsos, ...gotaQsos];
-  const matrix = buildBandModeMatrix(allQsos);
-  const sweep = calculateSectionSweep(allQsos);
-  const timeline = calculateActivityTimeline(allQsos);
+  const hasMainQsos = mainQsos.length > 0;
+  const hasGotaQsos = gotaQsos.length > 0;
+  const displayQsos = hasMainQsos ? mainQsos : gotaQsos;
 
-  const entryClassUpper = (config.entryClass || 'A').toUpperCase();
-  const baseClassLetter = entryClassUpper.replace(/[^A-F]/g, '')[0] || 'A';
-  const combinedClassCode = `${config.transmitters || 1}${baseClassLetter}`;
+  const elementId = 'main-report-print-container';
+  const pdfFilename = `${config.clubCall || 'W1AW'}_2026_FieldDay_Report.pdf`;
 
+  const sweep = calculateSectionSweep(displayQsos);
+  const matrix = buildBandModeMatrix(displayQsos);
+  const timeline = calculateActivityTimeline(displayQsos);
+  const totalQsos = displayQsos.length || 1;
+
+  // Mode breakdown
   const phoneCount = Object.values(matrix).reduce((sum, r) => sum + r.phone, 0);
   const cwCount = Object.values(matrix).reduce((sum, r) => sum + r.cw, 0);
   const digitalCount = Object.values(matrix).reduce((sum, r) => sum + r.digital, 0);
-  const grandTotal = allQsos.length || 1;
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const phonePct = parseFloat(((phoneCount / totalQsos) * 100).toFixed(1));
+  const cwPct = parseFloat(((cwCount / totalQsos) * 100).toFixed(1));
+  const digitalPct = parseFloat(((digitalCount / totalQsos) * 100).toFixed(1));
+
+  // Active bands
+  const activeBands = BANDS_ORDER.filter((b) => (matrix[b]?.total || 0) > 0);
+
+  const rawQsoPoints = cwCount * 2 + digitalCount * 2 + phoneCount * 1;
+  const mult = config.powerCategory === 'HIGH_500W' ? 1 : config.powerCategory === 'QRP_5W' ? 5 : 2;
+
+  const uniqueOpCount = operatorStats.length || 1;
+  const totalParticipants = Math.max(config.totalParticipants || 0, uniqueOpCount);
+  const participationIndex = parseFloat(((uniqueOpCount / totalParticipants) * 100).toFixed(1));
+
+  const clubCall = config.clubCall || 'W1AW';
+  const combinedClass = `${config.transmitters || 1}${(config.entryClass || 'A').toUpperCase()}`;
+
+  // GOTA Addendum Calculations
+  const gotaMatrix = buildBandModeMatrix(gotaQsos);
+  const gotaSweep = calculateSectionSweep(gotaQsos);
+  const gotaOperators = getOperatorLeaderboard(gotaQsos);
+  const totalReportPages = hasGotaQsos ? 5 : 4;
 
   const handleDownload = () => {
-    const filename =
-      reportType === 'main'
-        ? `${config.clubCall || 'FieldDay'}_2026_Report.pdf`
-        : `${config.clubCall || 'FieldDay'}_GOTA_2026_Report.pdf`;
-    const containerId = reportType === 'main' ? 'main-report-print-container' : 'gota-report-print-container';
-    exportElementToPdf(containerId, filename);
+    exportElementToPdf(elementId, pdfFilename);
   };
 
-  if (reportType === 'gota') {
-    const gotaOpsMap = new Map<string, { cw: number; phone: number; digital: number; total: number }>();
-    for (const qso of gotaQsos) {
-      const op = (qso.operator || 'GOTA_OP').toUpperCase();
-      if (!gotaOpsMap.has(op)) {
-        gotaOpsMap.set(op, { cw: 0, phone: 0, digital: 0, total: 0 });
-      }
-      const data = gotaOpsMap.get(op)!;
-      data.total++;
-      if (qso.mode === 'CW') data.cw++;
-      else if (qso.mode === 'PHONE') data.phone++;
-      else if (qso.mode === 'DIGITAL') data.digital++;
-    }
+  // Helper for Conic Gradient Pie Chart
+  const phoneEnd = phonePct;
+  const cwEnd = phoneEnd + cwPct;
+  const modeConicGradient = `conic-gradient(#22c55e 0% ${phoneEnd}%, #3b82f6 ${phoneEnd}% ${cwEnd}%, #eab308 ${cwEnd}% 100%)`;
 
+  // Band Pie Gradient
+  const BAND_PIE_COLORS = ['#9333ea', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#6366f1', '#64748b'];
+  let bandAccumulator = 0;
+  const bandStops = activeBands.map((band, idx) => {
+    const pct = (matrix[band].total / totalQsos) * 100;
+    const start = bandAccumulator;
+    bandAccumulator += pct;
+    const color = BAND_PIE_COLORS[idx % BAND_PIE_COLORS.length];
+    return `${color} ${start.toFixed(1)}% ${bandAccumulator.toFixed(1)}%`;
+  });
+  const bandConicGradient = activeBands.length > 0 ? `conic-gradient(${bandStops.join(', ')})` : `conic-gradient(#38bdf8 0% 100%)`;
+
+  // Empty state when no log file is uploaded yet
+  if (!hasMainQsos && !hasGotaQsos) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-end gap-3 no-print">
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-          >
-            <Printer className="w-4 h-4 text-amber-400" /> Print Report
-          </button>
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white shadow-md transition"
-          >
-            <Download className="w-4 h-4" /> Download PDF File
-          </button>
-        </div>
-
-        <div id="gota-report-print-container" className="space-y-6">
-          <div className="a4-page bg-white text-slate-900 border border-slate-300 rounded-lg p-8 shadow-xl font-sans text-xs space-y-6">
-            {/* Header */}
-            <div className="border-b-2 border-amber-500 pb-4 flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-black text-amber-700 tracking-tight uppercase">
-                  ARRL Field Day - Get On The Air (GOTA) Operations Report
-                </h1>
-                <p className="text-sm font-semibold text-slate-700 mt-1">
-                  GOTA Station Callsign: <span className="font-mono text-amber-800">{config.gotaCall || config.clubCall}</span> | Parent Entry: {config.clubCall} (Class {combinedClassCode} {config.homeSection})
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] font-bold text-slate-400 block uppercase">Event Date</span>
-                <span className="text-sm font-extrabold text-slate-800">June 27-28, 2026</span>
-              </div>
-            </div>
-
-            {/* GOTA KPI Cards */}
-            <div className="grid grid-cols-4 gap-3">
-              <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-                <span className="text-[10px] font-bold text-amber-800 uppercase block">Total GOTA QSOs</span>
-                <span className="text-xl font-black text-amber-900 font-mono">{gotaQsos.length}</span>
-              </div>
-              <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-                <span className="text-[10px] font-bold text-amber-800 uppercase block">GOTA Bonus Points</span>
-                <span className="text-xl font-black text-amber-900 font-mono">{score.gotaQsoBonusPoints} pts</span>
-              </div>
-              <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-                <span className="text-[10px] font-bold text-amber-800 uppercase block">Active GOTA Operators</span>
-                <span className="text-xl font-black text-amber-900 font-mono">{gotaOpsMap.size}</span>
-              </div>
-              <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-                <span className="text-[10px] font-bold text-amber-800 uppercase block">GOTA Coach Bonus</span>
-                <span className="text-xl font-black text-amber-900 font-mono">
-                  {config.bonuses.gotaCoach && gotaQsos.length >= 10 ? '100 pts' : '0 pts'}
-                </span>
-              </div>
-            </div>
-
-            {/* GOTA Operator Leaderboard */}
-            <div className="space-y-2">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-300 pb-1">
-                GOTA Operator Breakdown & Individual Bonus Claim (Rule 7.3.13)
-              </h2>
-              <table className="w-full text-left text-xs text-slate-800 border border-slate-300">
-                <thead className="bg-amber-100 text-amber-900 font-bold uppercase border-b border-slate-300">
-                  <tr>
-                    <th className="p-2">Operator Name / Callsign</th>
-                    <th className="p-2 text-right">CW QSOs</th>
-                    <th className="p-2 text-right">Phone QSOs</th>
-                    <th className="p-2 text-right">Digital QSOs</th>
-                    <th className="p-2 text-right font-bold">Total QSOs</th>
-                    <th className="p-2 text-right font-bold">Bonus Points (5 pts/QSO)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 font-mono">
-                  {Array.from(gotaOpsMap.entries()).map(([op, data]) => (
-                    <tr key={op} className="hover:bg-amber-50">
-                      <td className="p-2 font-bold text-amber-900 font-sans">{op}</td>
-                      <td className="p-2 text-right">{data.cw}</td>
-                      <td className="p-2 text-right">{data.phone}</td>
-                      <td className="p-2 text-right">{data.digital}</td>
-                      <td className="p-2 text-right font-bold text-slate-900">{data.total}</td>
-                      <td className="p-2 text-right font-bold text-amber-700">{data.total * 5} pts</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Band / Mode Breakdown */}
-            <div className="space-y-2">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-300 pb-1">
-                GOTA Operating Band Breakdown
-              </h2>
-              <table className="w-full text-left text-xs text-slate-800 border border-slate-300">
-                <thead className="bg-slate-100 font-bold uppercase border-b border-slate-300">
-                  <tr>
-                    <th className="p-2">Band</th>
-                    <th className="p-2 text-right">CW</th>
-                    <th className="p-2 text-right">Phone</th>
-                    <th className="p-2 text-right">Digital</th>
-                    <th className="p-2 text-right font-bold">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 font-mono">
-                  {BANDS_ORDER.map((band) => {
-                    const row = matrix[band] || { cw: 0, phone: 0, digital: 0, total: 0 };
-                    return (
-                      <tr key={band}>
-                        <td className="p-2 font-bold font-sans">{band}</td>
-                        <td className="p-2 text-right">{row.cw}</td>
-                        <td className="p-2 text-right">{row.phone}</td>
-                        <td className="p-2 text-right">{row.digital}</td>
-                        <td className="p-2 text-right font-bold">{row.total}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center space-y-4 max-w-xl mx-auto my-8">
+        <AlertCircle className="w-12 h-12 text-amber-400 mx-auto" />
+        <div>
+          <h2 className="text-lg font-bold text-slate-100">No Log Data Available for Report</h2>
+          <p className="text-xs text-slate-400 mt-1">
+            Please upload your Field Day ADIF log file (`.adi` / `.adif`) on the <strong>Operations Dashboard</strong> tab to view and print your post-event report.
+          </p>
         </div>
       </div>
     );
   }
 
-  // Main Operations Report
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end gap-3 no-print">
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-        >
-          <Printer className="w-4 h-4 text-sky-400" /> Print Report
-        </button>
-        <button
-          onClick={handleDownload}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-md transition"
-        >
-          <Download className="w-4 h-4" /> Download PDF File
-        </button>
+      {/* Export Toolbar */}
+      <div className="no-print bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-bold text-slate-100">Official Field Day Operations Report</h2>
+          <p className="text-xs text-slate-400">
+            Click <strong className="text-sky-400">Print / Save as PDF</strong> for browser print, or <strong className="text-sky-400">Download PDF File</strong> for direct file download.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 shadow transition"
+          >
+            <Printer className="w-4 h-4 text-sky-400" />
+            Print / Save as PDF
+          </button>
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/20 transition"
+          >
+            <Download className="w-4 h-4" />
+            Download PDF File
+          </button>
+        </div>
       </div>
 
-      <div id="main-report-print-container" className="space-y-8">
-        {/* PAGE 1: Executive Overview & Operating Spectrum */}
-        <div className="a4-page bg-white text-slate-900 border border-slate-300 rounded-lg p-8 shadow-xl font-sans text-xs space-y-6">
-          {/* Header */}
-          <div className="border-b-2 border-sky-600 pb-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-black text-sky-900 tracking-tight uppercase">
-                {config.clubName || 'Amateur Radio Club'} - Field Day Operations Report
-              </h1>
-              <p className="text-sm font-semibold text-slate-700 mt-1">
-                Callsign: <span className="font-mono text-sky-800 font-bold">{config.clubCall}</span> | Exchange: <span className="font-bold text-amber-700">{combinedClassCode} {config.homeSection}</span> | Home Grid: {config.homeGrid}
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-[10px] font-bold text-slate-400 block uppercase">ARRL Field Day</span>
-              <span className="text-sm font-extrabold text-slate-800">June 27-28, 2026</span>
-            </div>
-          </div>
-
-          {/* Executive KPI Grid */}
-          <div className="grid grid-cols-5 gap-3">
-            <div className="bg-sky-50 p-3 rounded-lg border border-sky-200">
-              <span className="text-[10px] font-bold text-sky-800 uppercase block">Total Score</span>
-              <span className="text-xl font-black text-sky-900 font-mono">{score.totalScore.toLocaleString()}</span>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <span className="text-[10px] font-bold text-slate-600 uppercase block">Total QSOs</span>
-              <span className="text-xl font-black text-slate-900 font-mono">{score.totalQsos}</span>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <span className="text-[10px] font-bold text-slate-600 uppercase block">Power Multiplier</span>
-              <span className="text-xl font-black text-slate-900 font-mono">{score.powerMultiplier}x</span>
-            </div>
-            <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200">
-              <span className="text-[10px] font-bold text-emerald-800 uppercase block">Participation Index</span>
-              <span className="text-xl font-black text-emerald-900 font-mono">{score.participationIndexPct}%</span>
-            </div>
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-              <span className="text-[10px] font-bold text-amber-800 uppercase block">Section Sweep</span>
-              <span className="text-xl font-black text-amber-900 font-mono">{sweep.workedCount}/86</span>
-            </div>
-          </div>
-
-          {/* Visual Share Charts Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Mode Distribution Share Progress */}
-            <div className="bg-slate-50 border border-slate-300 rounded-lg p-3 space-y-2">
-              <h3 className="font-bold text-slate-800 uppercase text-xs">Operating Mode Distribution</h3>
-              <div className="space-y-1.5 font-mono text-[11px]">
-                <div>
-                  <div className="flex justify-between text-slate-700">
-                    <span>Phone (SSB)</span>
-                    <span className="font-bold">{phoneCount} QSOs ({((phoneCount / grandTotal) * 100).toFixed(1)}%)</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-0.5">
-                    <div className="bg-emerald-500 h-full" style={{ width: `${(phoneCount / grandTotal) * 100}%` }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-slate-700">
-                    <span>CW</span>
-                    <span className="font-bold">{cwCount} QSOs ({((cwCount / grandTotal) * 100).toFixed(1)}%)</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-0.5">
-                    <div className="bg-blue-500 h-full" style={{ width: `${(cwCount / grandTotal) * 100}%` }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-slate-700">
-                    <span>Digital (FT8/RTTY)</span>
-                    <span className="font-bold">{digitalCount} QSOs ({((digitalCount / grandTotal) * 100).toFixed(1)}%)</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-0.5">
-                    <div className="bg-amber-500 h-full" style={{ width: `${(digitalCount / grandTotal) * 100}%` }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Top 4 Bands Distribution */}
-            <div className="bg-slate-50 border border-slate-300 rounded-lg p-3 space-y-2">
-              <h3 className="font-bold text-slate-800 uppercase text-xs">Top Operating Band Share</h3>
-              <div className="space-y-1.5 font-mono text-[11px]">
-                {BANDS_ORDER.filter((b) => matrix[b]?.total > 0).slice(0, 3).map((b) => {
-                  const count = matrix[b].total;
-                  const pct = ((count / grandTotal) * 100).toFixed(1);
-                  return (
-                    <div key={b}>
-                      <div className="flex justify-between text-slate-700">
-                        <span className="font-bold">{b}</span>
-                        <span>{count} QSOs ({pct}%)</span>
-                      </div>
-                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-0.5">
-                        <div className="bg-sky-600 h-full" style={{ width: `${pct}%` }}></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Top Operators Highlights */}
-          {operatorStats.length > 0 && (
-            <div className="bg-sky-50 border border-sky-200 rounded-lg p-3 space-y-2">
-              <div className="flex items-center justify-between border-b border-sky-200 pb-1">
-                <span className="font-bold text-sky-900 uppercase text-xs">Top Operating Contributors</span>
-                <span className="text-[11px] text-sky-800 font-mono">{operatorStats.length} Active Logging Operators</span>
-              </div>
-              <div className="grid grid-cols-5 gap-2 font-mono text-[11px]">
-                {operatorStats.slice(0, 5).map((op, i) => (
-                  <div key={op.callsign} className="bg-white p-2 rounded border border-sky-200 flex flex-col justify-between">
-                    <span className="font-bold text-sky-900 font-sans">#{i + 1} {op.callsign}</span>
-                    <span className="text-slate-900 font-extrabold text-xs">{op.totalQsos} QSOs</span>
-                    <span className="text-[10px] text-slate-500 font-sans">{op.pctOfTotal}% of total</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Official Score Calculation Breakdown */}
-          <div className="bg-slate-50 border border-slate-300 rounded-lg p-4 space-y-2">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-300 pb-1">
-              ARRL Official Field Day Score Breakdown
-            </h2>
-            <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+      {/* A4 Report Printable Document Container */}
+      <div id={elementId} className="space-y-8 bg-slate-950 p-2 sm:p-6 rounded-xl">
+        {/* ================= PAGE 1: Executive Summary, Score Breakdown & Full Matrix ================= */}
+        <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
+          <div className="space-y-5">
+            {/* Header */}
+            <div className="border-b-2 border-slate-900 pb-3 flex items-start justify-between">
               <div>
-                <div className="flex justify-between py-1 border-b border-slate-200">
-                  <span>Phone QSOs ({score.phoneQsos} x 1 pt):</span> <span>{score.phonePoints} pts</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-200">
-                  <span>CW QSOs ({score.cwQsos} x 2 pts):</span> <span>{score.cwPoints} pts</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-200">
-                  <span>Digital QSOs ({score.digitalQsos} x 2 pts):</span> <span>{score.digitalPoints} pts</span>
-                </div>
-                <div className="flex justify-between py-1 font-bold text-slate-900">
-                  <span>Raw QSO Points:</span> <span>{score.rawQsoPoints} pts</span>
-                </div>
-                <div className="flex justify-between py-1 font-bold text-sky-800 bg-sky-100 p-1.5 rounded mt-1">
-                  <span>Multiplied QSO Points ({score.powerMultiplier}x):</span> <span>{score.multipliedQsoPoints} pts</span>
+                <span className="text-[10px] font-extrabold tracking-widest text-sky-700 uppercase">
+                  ARRL FIELD DAY OFFICIAL OPERATIONS REPORT
+                </span>
+                <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none mt-1">
+                  {config.clubName || 'ARRL HQ Staff Radio Club'}
+                </h1>
+                <div className="flex items-center gap-3 text-xs font-semibold text-slate-700 mt-2 font-mono">
+                  <span>Callsign: <strong className="text-slate-950">{clubCall}</strong></span>
+                  <span>•</span>
+                  <span>Exchange: <strong className="text-slate-950">{combinedClass} {config.homeSection || 'CT'}</strong></span>
+                  <span>•</span>
+                  <span>Home Grid: <strong className="text-slate-950">{config.homeGrid || 'FN31'}</strong></span>
                 </div>
               </div>
+              <div className="text-right">
+                <div className="text-[10px] font-bold text-slate-500 uppercase">ARRL Field Day</div>
+                <div className="text-sm font-black text-slate-900">June 27-28, 2026</div>
+              </div>
+            </div>
 
-              <div>
-                <span className="font-sans font-bold text-slate-700 block mb-1">Claimed Bonus Points:</span>
-                <div className="space-y-1 max-h-32 overflow-y-auto pr-1 text-[11px]">
-                  {score.bonusPointsItemized.map((b, i) => (
-                    <div key={i} className="flex justify-between text-slate-600 border-b border-slate-200 py-0.5">
-                      <span>{b.label}</span> <span className="font-bold text-slate-800">+{b.points}</span>
-                    </div>
-                  ))}
+            {/* KPI Summary Grid */}
+            <div className="grid grid-cols-4 gap-3 text-center">
+              <div className="bg-slate-100 border border-slate-300 rounded p-2">
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Total Score</div>
+                <div className="text-lg font-black text-slate-900 font-mono">
+                  {score.totalScore.toLocaleString()}
                 </div>
-                <div className="flex justify-between py-1 font-bold text-amber-800 bg-amber-100 p-1.5 rounded mt-1">
-                  <span>Total Bonus Points:</span> <span>+{score.totalBonusPoints} pts</span>
+              </div>
+              <div className="bg-slate-100 border border-slate-300 rounded p-2">
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Main Station QSOs</div>
+                <div className="text-lg font-black text-slate-900 font-mono">{mainQsos.length.toLocaleString()}</div>
+              </div>
+              <div className="bg-slate-100 border border-slate-300 rounded p-2">
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Power Mult</div>
+                <div className="text-lg font-black text-slate-900 font-mono">{mult}x</div>
+              </div>
+              <div className="bg-slate-100 border border-slate-300 rounded p-2">
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Section Sweep</div>
+                <div className="text-lg font-black text-slate-900 font-mono">{sweep.workedCount}/86</div>
+              </div>
+            </div>
+
+            {/* Participation KPI */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-emerald-700" />
+                <span className="text-xs font-bold text-emerald-950">Active Operator Participation Index</span>
+              </div>
+              <div className="text-xs font-mono font-bold text-emerald-800">
+                {participationIndex}% ({uniqueOpCount} operators / {totalParticipants} attendees)
+              </div>
+            </div>
+
+            {/* Official Score Calculation Breakdown */}
+            <div className="border border-slate-300 rounded p-3 space-y-2">
+              <h3 className="text-xs font-bold text-slate-900 uppercase">ARRL Official Field Day Score Breakdown</h3>
+              <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+                <div className="space-y-1 border-r border-slate-200 pr-3">
+                  <div className="flex justify-between"><span>Phone QSOs ({phoneCount} × 1 pt):</span> <span>{phoneCount} pts</span></div>
+                  <div className="flex justify-between"><span>CW QSOs ({cwCount} × 2 pts):</span> <span>{cwCount * 2} pts</span></div>
+                  <div className="flex justify-between"><span>Digital QSOs ({digitalCount} × 2 pts):</span> <span>{digitalCount * 2} pts</span></div>
+                  <div className="border-t border-slate-300 pt-1 flex justify-between font-bold text-slate-900">
+                    <span>Raw QSO Points:</span> <span>{rawQsoPoints} pts</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-sky-800">
+                    <span>Multiplied QSO Points ({mult}x):</span> <span>{score.qsoPoints} pts</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px]"><span>Claimed Bonus Points:</span> <strong className="text-emerald-700">+{score.totalBonusPoints} pts</strong></div>
+                  {hasGotaQsos && (
+                    <div className="flex justify-between text-[11px]"><span>GOTA Station Bonus:</span> <strong className="text-amber-700">+{score.gotaQsoBonusPoints} pts</strong></div>
+                  )}
+                  <div className="flex justify-between text-[11px]"><span>Participation Index:</span> <span>{participationIndex}%</span></div>
+                  <div className="border-t-2 border-slate-900 pt-1 flex justify-between font-black text-sm text-slate-950">
+                    <span>TOTAL CLAIMED SCORE:</span> <span>{score.totalScore.toLocaleString()} pts</span>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Full Main Station Band & Mode Matrix Table */}
+            <div className="border border-slate-300 rounded p-3 space-y-2">
+              <h3 className="text-xs font-bold text-slate-900 uppercase">Main Station Band & Mode Cross-Tabulation Matrix</h3>
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] border-b border-slate-300">
+                  <tr>
+                    <th className="p-1.5">Band</th>
+                    <th className="p-1.5 text-right text-blue-800">CW QSOs</th>
+                    <th className="p-1.5 text-right text-emerald-800">Phone (SSB)</th>
+                    <th className="p-1.5 text-right text-amber-800">Digital</th>
+                    <th className="p-1.5 text-right font-bold text-slate-900">Total QSOs</th>
+                    <th className="p-1.5 text-right">% Share</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 text-[11px]">
+                  {BANDS_ORDER.map((band) => {
+                    const row = matrix[band] || { cw: 0, phone: 0, digital: 0, total: 0 };
+                    const pct = displayQsos.length > 0 ? ((row.total / displayQsos.length) * 100).toFixed(1) : '0.0';
+
+                    return (
+                      <tr key={band}>
+                        <td className="p-1.5 font-bold text-sky-800">{band}</td>
+                        <td className="p-1.5 text-right text-blue-900">{row.cw}</td>
+                        <td className="p-1.5 text-right text-emerald-900">{row.phone}</td>
+                        <td className="p-1.5 text-right text-amber-900">{row.digital}</td>
+                        <td className="p-1.5 text-right font-bold text-slate-900">{row.total}</td>
+                        <td className="p-1.5 text-right text-slate-600">{pct}%</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-400">
+                  <tr>
+                    <td className="p-1.5 text-slate-900">TOTALS</td>
+                    <td className="p-1.5 text-right text-blue-900">{cwCount}</td>
+                    <td className="p-1.5 text-right text-emerald-900">{phoneCount}</td>
+                    <td className="p-1.5 text-right text-amber-900">{digitalCount}</td>
+                    <td className="p-1.5 text-right text-sky-900">{displayQsos.length}</td>
+                    <td className="p-1.5 text-right text-slate-900">100.0%</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
-          {/* Band & Mode Matrix Table */}
-          <div className="space-y-2">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-300 pb-1">
-              Band & Mode Distribution Matrix
-            </h2>
-            <table className="w-full text-left text-xs border border-slate-300">
-              <thead className="bg-slate-100 text-slate-800 font-bold uppercase border-b border-slate-300">
-                <tr>
-                  <th className="p-2">Band</th>
-                  <th className="p-2 text-right">CW</th>
-                  <th className="p-2 text-right">Phone (SSB)</th>
-                  <th className="p-2 text-right">Digital</th>
-                  <th className="p-2 text-right font-bold">Total QSOs</th>
-                  <th className="p-2 text-right">% Share</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 font-mono">
-                {BANDS_ORDER.map((band) => {
-                  const row = matrix[band] || { cw: 0, phone: 0, digital: 0, total: 0 };
-                  const pct = score.totalQsos > 0 ? ((row.total / score.totalQsos) * 100).toFixed(1) : '0.0';
-                  return (
-                    <tr key={band}>
-                      <td className="p-2 font-bold font-sans">{band}</td>
-                      <td className="p-2 text-right">{row.cw}</td>
-                      <td className="p-2 text-right">{row.phone}</td>
-                      <td className="p-2 text-right">{row.digital}</td>
-                      <td className="p-2 text-right font-bold text-slate-900">{row.total}</td>
-                      <td className="p-2 text-right text-slate-600">{pct}%</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {/* Page Footer */}
+          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
+            <span>ARRL Field Day Operations Summary • Class {combinedClass}</span>
+            <span>Page 1 of {totalReportPages}</span>
           </div>
         </div>
 
-        {/* PAGE 2: Section Sweep Analysis */}
-        <div className="a4-page bg-white text-slate-900 border border-slate-300 rounded-lg p-8 shadow-xl font-sans text-xs space-y-6">
-          <div className="border-b-2 border-emerald-600 pb-3">
-            <h2 className="text-xl font-black text-emerald-900 tracking-tight uppercase">
-              ARRL & RAC Section Sweep Scorecard (86 Sections)
-            </h2>
-            <p className="text-xs text-slate-600">
-              Worked Ratio: <span className="font-bold font-mono text-emerald-700">{sweep.workedCount} / 86</span> ({sweep.sweepPct}% Completion)
-            </p>
+        {/* ================= PAGE 2: Full-Width Activity Rate Timeline & Pie Charts ================= */}
+        <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
+          <div className="space-y-6">
+            <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-black text-slate-900 uppercase">Main Station Activity Velocity & Distribution Analytics</h2>
+                <p className="text-xs text-slate-600">Peak Rate: <strong>{timeline.peakHourlyRate} QSOs/hr</strong> ({timeline.peakWindowLabel})</p>
+              </div>
+              <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
+            </div>
+
+            {/* Full-Width Hourly Activity Velocity Timeline Bar Chart */}
+            <div className="border border-slate-300 rounded p-4 space-y-3">
+              <h3 className="text-xs font-bold text-slate-900 uppercase">Hourly QSO Activity Velocity Profile</h3>
+              <div className="h-44 flex items-end justify-between gap-1 pt-6 border-b border-slate-300 pb-2">
+                {timeline.bins.map((bin, i) => {
+                  const maxCount = timeline.peakHourlyRate || 1;
+                  const heightPct = Math.max((bin.qsoCount / maxCount) * 100, 4);
+
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+                      <span className="text-[8px] font-mono font-bold text-slate-700">{bin.qsoCount > 0 ? bin.qsoCount : ''}</span>
+                      <div
+                        className="w-full bg-sky-600 rounded-t transition-all"
+                        style={{ height: `${heightPct}%` }}
+                      />
+                      <span className="text-[7px] font-mono text-slate-500 rotate-45 origin-left whitespace-nowrap mt-1">
+                        {bin.timeLabel.split(' ')[0]}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Side-by-Side Mode & Band Pie Charts */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Operating Mode Pie Chart */}
+              <div className="border border-slate-300 rounded p-4 space-y-3 flex flex-col items-center">
+                <h3 className="text-xs font-bold text-slate-900 uppercase text-center">Operating Mode Share</h3>
+                <div
+                  className="w-36 h-36 rounded-full shadow-inner border-2 border-slate-200 my-2"
+                  style={{ background: modeConicGradient }}
+                />
+                <div className="w-full space-y-1 text-xs font-mono pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Phone (SSB)</span>
+                    <span><strong>{phonePct}%</strong> ({phoneCount})</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> CW</span>
+                    <span><strong>{cwPct}%</strong> ({cwCount})</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Digital</span>
+                    <span><strong>{digitalPct}%</strong> ({digitalCount})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Band Share Pie Chart */}
+              <div className="border border-slate-300 rounded p-4 space-y-3 flex flex-col items-center">
+                <h3 className="text-xs font-bold text-slate-900 uppercase text-center">Band Distribution Share</h3>
+                <div
+                  className="w-36 h-36 rounded-full shadow-inner border-2 border-slate-200 my-2"
+                  style={{ background: bandConicGradient }}
+                />
+                <div className="w-full space-y-1 text-xs font-mono pt-2 border-t border-slate-200">
+                  {activeBands.slice(0, 4).map((band, idx) => {
+                    const count = matrix[band].total;
+                    const pct = ((count / totalQsos) * 100).toFixed(1);
+                    const color = BAND_PIE_COLORS[idx % BAND_PIE_COLORS.length];
+
+                    return (
+                      <div key={band} className="flex items-center justify-between text-[11px]">
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} /> {band}</span>
+                        <span><strong>{pct}%</strong> ({count})</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* 86 Section Scorecard Grid */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-slate-800 uppercase">Official Section Check-Off Grid</h3>
-            <div className="grid grid-cols-10 gap-1.5 font-mono text-[10px]">
+          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
+            <span>ARRL Field Day Operations Summary • Activity Velocity & Pie Charts</span>
+            <span>Page 2 of {totalReportPages}</span>
+          </div>
+        </div>
+
+        {/* ================= PAGE 3: 86-Section Sweep Scorecard ================= */}
+        <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
+          <div className="space-y-6">
+            <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-black text-slate-900 uppercase">ARRL & RAC Section Sweep Scorecard (86 Sections)</h2>
+                <p className="text-xs text-slate-600">Worked Ratio: <strong>{sweep.workedCount} / 86</strong> ({sweep.sweepPct}%)</p>
+              </div>
+              <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
+            </div>
+
+            {/* 86 Section Check-Off Grid */}
+            <div className="grid grid-cols-10 gap-1 text-center font-mono text-[9px]">
               {OFFICIAL_ARRL_SECTIONS.map((sec) => {
-                const isWorked = sweep.workedSet.has(sec.code);
                 const count = sweep.sectionCounts[sec.code] || 0;
+                const isWorked = count > 0;
+
                 return (
                   <div
                     key={sec.code}
-                    className={`p-1.5 rounded text-center border ${
-                      isWorked
-                        ? 'bg-emerald-100 border-emerald-400 text-emerald-900 font-bold'
-                        : 'bg-slate-50 border-slate-200 text-slate-400'
+                    className={`p-1 rounded border ${
+                      isWorked ? 'bg-emerald-100 border-emerald-400 font-bold text-emerald-950' : 'bg-slate-50 border-slate-200 text-slate-400'
                     }`}
                   >
                     <div>{sec.code}</div>
-                    <div className="text-[9px] opacity-75">{isWorked ? `${count} ${count === 1 ? 'QSO' : 'QSOs'}` : '-'}</div>
+                    <div className="text-[8px]">{isWorked ? `${count} QSO${count > 1 ? 's' : ''}` : '-'}</div>
                   </div>
                 );
               })}
             </div>
+
+            {/* Top 10 Contacted Sections */}
+            <div className="border border-slate-300 rounded p-3 space-y-2">
+              <h3 className="text-xs font-bold text-slate-900 uppercase">Top 10 Contacted Sections</h3>
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-100 text-slate-700 uppercase text-[10px]">
+                  <tr>
+                    <th className="p-1.5">Section</th>
+                    <th className="p-1.5">Name</th>
+                    <th className="p-1.5 text-right">QSOs</th>
+                    <th className="p-1.5 text-right">% Share</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 text-[11px]">
+                  {sweep.topSections.map((sec) => (
+                    <tr key={sec.code}>
+                      <td className="p-1.5 font-bold text-sky-800">{sec.code}</td>
+                      <td className="p-1.5">{sec.name}</td>
+                      <td className="p-1.5 text-right font-bold text-slate-900">{sec.count}</td>
+                      <td className="p-1.5 text-right text-slate-600">{sec.pct}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Top 10 Sections Table */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-slate-800 uppercase">Top 10 Contacted Sections</h3>
-            <table className="w-full text-left text-xs border border-slate-300">
-              <thead className="bg-slate-100 font-bold uppercase border-b border-slate-300">
-                <tr>
-                  <th className="p-2">Section Code</th>
-                  <th className="p-2">Full Section Name</th>
-                  <th className="p-2 text-right">QSO Count</th>
-                  <th className="p-2 text-right">% of Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 font-mono">
-                {sweep.topSections.map((sec) => (
-                  <tr key={sec.code}>
-                    <td className="p-2 font-bold text-emerald-800 font-sans">{sec.code}</td>
-                    <td className="p-2 text-slate-800 font-sans">{sec.name}</td>
-                    <td className="p-2 text-right font-bold text-slate-900">{sec.count}</td>
-                    <td className="p-2 text-right text-slate-600">{sec.pct}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
+            <span>ARRL Field Day Operations Summary • Section Sweep</span>
+            <span>Page 3 of {totalReportPages}</span>
           </div>
         </div>
 
-        {/* PAGE 3: Geographic Distribution Map */}
-        <div className="a4-page bg-white text-slate-900 border border-slate-300 rounded-lg p-8 shadow-xl font-sans text-xs space-y-6">
-          <div className="border-b-2 border-sky-600 pb-3">
-            <h2 className="text-xl font-black text-sky-900 tracking-tight uppercase">
-              Geographic Propagation Path Snapshot
-            </h2>
-            <p className="text-xs text-slate-600">Great-circle propagation vectors from home station locator {config.homeGrid}</p>
+        {/* ================= PAGE 4: Geodetic Map & Main Operator / Station Breakdown ================= */}
+        <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
+          <div className="space-y-5">
+            <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-black text-slate-900 uppercase">Main Station Geographic Map & Team Profiles</h2>
+                <p className="text-xs text-slate-600">Great-circle propagation vectors and main team breakdown</p>
+              </div>
+              <div className="text-xs font-bold text-slate-700 font-mono">Callsign: {clubCall}</div>
+            </div>
+
+            {/* Embedded Live Map Snapshot */}
+            <div className="border-2 border-slate-900 rounded-md overflow-hidden bg-slate-950 h-[340px] relative flex items-center justify-center">
+              {mapSnapshotUrl ? (
+                <img src={mapSnapshotUrl} alt="Geodetic Propagation Map Snapshot" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-slate-400 text-xs text-center p-4">
+                  <div className="font-mono text-sky-400 mb-1">[Map Snapshot Image Rendered Automatically]</div>
+                  Great-Circle vectors from {config.homeGrid || 'FN31'} across US, RAC, and International DX entities
+                </div>
+              )}
+            </div>
+
+            {/* Main Station Operator & Rig Breakdown Grids */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Operator Leaderboard */}
+              <div className="border border-slate-300 rounded p-3 space-y-2">
+                <h3 className="text-xs font-bold text-slate-900 uppercase">Main Station Operators</h3>
+                <table className="w-full text-left text-[10px] font-mono">
+                  <thead className="bg-slate-100 text-slate-700 uppercase">
+                    <tr>
+                      <th className="p-1">Call</th>
+                      <th className="p-1 text-right">QSOs</th>
+                      <th className="p-1 text-right">Hrs</th>
+                      <th className="p-1 text-right">%</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {operatorStats.slice(0, 6).map((op) => (
+                      <tr key={op.callsign}>
+                        <td className="p-1 font-bold text-sky-800">{op.callsign}</td>
+                        <td className="p-1 text-right font-bold text-slate-900">{op.totalQsos}</td>
+                        <td className="p-1 text-right text-slate-600">{op.activeHours}h</td>
+                        <td className="p-1 text-right text-slate-600">{op.pctOfTotal}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Station Breakdown */}
+              <div className="border border-slate-300 rounded p-3 space-y-2">
+                <h3 className="text-xs font-bold text-slate-900 uppercase">Main Station Rigs</h3>
+                <table className="w-full text-left text-[10px] font-mono">
+                  <thead className="bg-slate-100 text-slate-700 uppercase">
+                    <tr>
+                      <th className="p-1">Station</th>
+                      <th className="p-1 text-right">QSOs</th>
+                      <th className="p-1 text-right">CW</th>
+                      <th className="p-1 text-right">SSB</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {stationStats.slice(0, 6).map((st) => (
+                      <tr key={st.name}>
+                        <td className="p-1 font-bold text-emerald-800">{st.name}</td>
+                        <td className="p-1 text-right font-bold text-slate-900">{st.totalQsos}</td>
+                        <td className="p-1 text-right text-blue-800">{st.cwQsos}</td>
+                        <td className="p-1 text-right text-emerald-800">{st.phoneQsos}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
-          {mapSnapshotUrl ? (
-            <div className="border border-slate-300 rounded-lg overflow-hidden">
-              <img src={mapSnapshotUrl} alt="Geographic Propagation Path Map" className="w-full h-auto object-cover" />
-            </div>
-          ) : (
-            <div className="h-64 bg-slate-100 border border-slate-300 rounded-lg flex items-center justify-center text-slate-500 font-semibold">
-              Snapshot map captured from live propagation map screen
-            </div>
-          )}
-
-          <div className="bg-sky-50 border border-sky-200 rounded-lg p-4 space-y-2">
-            <h3 className="font-bold text-sky-900 uppercase">Propagation Path & DX Callout Summary</h3>
-            <p className="text-slate-700 leading-relaxed">
-              Operation successfully completed short-path communications across major North American population hubs. High density coverage achieved on 20M and 40M HF bands, with strong regional Groundwave/NVIS propagation on 80M.
-            </p>
+          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
+            <span>ARRL Field Day Operations Summary • Map & Team Breakdown</span>
+            <span>Page 4 of {totalReportPages}</span>
           </div>
         </div>
 
-        {/* PAGE 4: Activity Rate Timeline & Leaderboards */}
-        <div className="a4-page bg-white text-slate-900 border border-slate-300 rounded-lg p-8 shadow-xl font-sans text-xs space-y-6">
-          <div className="border-b-2 border-amber-600 pb-3">
-            <h2 className="text-xl font-black text-amber-900 tracking-tight uppercase">
-              Activity Rate Timeline & Operator Leaderboards
-            </h2>
-            <p className="text-xs text-slate-600">Hourly QSO velocity profile and individual operator achievements</p>
-          </div>
+        {/* ================= PAGE 5 (ADDENDUM): Dedicated GOTA Station Operations ================= */}
+        {hasGotaQsos && (
+          <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
+            <div className="space-y-5">
+              <div className="border-b-2 border-amber-600 pb-3 flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] font-extrabold tracking-widest text-amber-700 uppercase flex items-center gap-1">
+                    <Award className="w-3.5 h-3.5 text-amber-600" />
+                    ARRL FIELD DAY GOTA STATION OPERATIONS ADDENDUM (RULE 4.1)
+                  </span>
+                  <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none mt-1">
+                    Get On The Air (GOTA) Station Report
+                  </h2>
+                  <p className="text-xs text-slate-600 mt-1 font-mono">
+                    Dedicated station for novice, technician, and newly licensed operators
+                  </p>
+                </div>
+                <div className="text-right font-mono">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase">GOTA Bonus Earned</div>
+                  <div className="text-base font-black text-amber-700">+{score.gotaQsoBonusPoints} pts</div>
+                </div>
+              </div>
 
-          {/* Hourly QSO Velocity Bins Visual Bar Chart */}
-          <div className="bg-slate-50 border border-slate-300 rounded-lg p-4 space-y-2">
-            <div className="flex items-center justify-between border-b border-slate-300 pb-1">
-              <h3 className="font-bold text-slate-800 uppercase">Hourly QSO Velocity (Total QSOs/hr)</h3>
-              <span className="text-xs font-mono font-bold text-sky-800">Peak: {timeline.peakHourlyRate} QSOs/hr</span>
+              {/* GOTA Summary Banner */}
+              <div className="bg-amber-50 border border-amber-300 rounded p-3 grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <div className="text-[9px] font-bold text-amber-900 uppercase">GOTA Total Contacts</div>
+                  <div className="text-base font-black text-slate-900 font-mono">{gotaQsos.length} QSOs</div>
+                </div>
+                <div>
+                  <div className="text-[9px] font-bold text-amber-900 uppercase">GOTA Bonus Score</div>
+                  <div className="text-base font-black text-amber-700 font-mono">+{score.gotaQsoBonusPoints} pts</div>
+                </div>
+                <div>
+                  <div className="text-[9px] font-bold text-amber-900 uppercase">GOTA Section Sweep</div>
+                  <div className="text-base font-black text-slate-900 font-mono">{gotaSweep.workedCount}/86</div>
+                </div>
+              </div>
+
+              {/* GOTA Band & Mode Matrix Table */}
+              <div className="border border-slate-300 rounded p-3 space-y-2">
+                <h3 className="text-xs font-bold text-slate-900 uppercase">GOTA Station Band & Mode Matrix</h3>
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] border-b border-slate-300">
+                    <tr>
+                      <th className="p-1.5">Band</th>
+                      <th className="p-1.5 text-right text-blue-800">CW QSOs</th>
+                      <th className="p-1.5 text-right text-emerald-800">Phone (SSB)</th>
+                      <th className="p-1.5 text-right text-amber-800">Digital</th>
+                      <th className="p-1.5 text-right font-bold text-slate-900">Total QSOs</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 text-[11px]">
+                    {BANDS_ORDER.map((band) => {
+                      const row = gotaMatrix[band] || { cw: 0, phone: 0, digital: 0, total: 0 };
+                      if (row.total === 0) return null;
+
+                      return (
+                        <tr key={band}>
+                          <td className="p-1.5 font-bold text-amber-800">{band}</td>
+                          <td className="p-1.5 text-right text-blue-900">{row.cw}</td>
+                          <td className="p-1.5 text-right text-emerald-900">{row.phone}</td>
+                          <td className="p-1.5 text-right text-amber-900">{row.digital}</td>
+                          <td className="p-1.5 text-right font-bold text-slate-900">{row.total}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* GOTA Operator Leaderboard */}
+              <div className="border border-slate-300 rounded p-3 space-y-2">
+                <h3 className="text-xs font-bold text-slate-900 uppercase">GOTA Operating Participants & Mentors</h3>
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-slate-100 text-slate-700 uppercase text-[10px]">
+                    <tr>
+                      <th className="p-1.5">Operator Callsign</th>
+                      <th className="p-1.5 text-right">QSOs</th>
+                      <th className="p-1.5 text-right">Active Hours</th>
+                      <th className="p-1.5 text-right">Top Band</th>
+                      <th className="p-1.5 text-right">% Share</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 text-[11px]">
+                    {gotaOperators.map((op) => (
+                      <tr key={op.callsign}>
+                        <td className="p-1.5 font-bold text-amber-800">{op.callsign}</td>
+                        <td className="p-1.5 text-right font-bold text-slate-900">{op.totalQsos}</td>
+                        <td className="p-1.5 text-right text-slate-600">{op.activeHours} hrs</td>
+                        <td className="p-1.5 text-right text-sky-800">{op.topBand}</td>
+                        <td className="p-1.5 text-right text-slate-600">{op.pctOfTotal}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="grid grid-cols-12 gap-1 items-end h-24 pt-2 border-b border-slate-300 font-mono text-[9px]">
-              {timeline.bins.slice(0, 24).map((bin, i) => {
-                const maxRate = timeline.peakHourlyRate || 1;
-                const barPct = Math.max((bin.qsoCount / maxRate) * 100, 4);
-                return (
-                  <div key={i} className="flex flex-col items-center h-full justify-end" title={`${bin.timeLabel}: ${bin.qsoCount} QSOs`}>
-                    <div className="w-full bg-sky-500 rounded-t" style={{ height: `${barPct}%` }}></div>
-                    <span className="text-[8px] text-slate-500 font-sans truncate mt-1">{bin.timeLabel.split(' ')[0]}</span>
-                  </div>
-                );
-              })}
+            <div className="border-t border-amber-400 pt-2 text-[10px] text-slate-500 flex justify-between">
+              <span>ARRL Field Day Operations Summary • GOTA Addendum</span>
+              <span>Page 5 of 5</span>
             </div>
           </div>
-
-          {/* Operator Leaderboard Table */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-slate-800 uppercase">Operator Leaderboard</h3>
-            <table className="w-full text-left text-xs border border-slate-300">
-              <thead className="bg-amber-100 text-amber-900 font-bold uppercase border-b border-slate-300">
-                <tr>
-                  <th className="p-2">Rank</th>
-                  <th className="p-2">Callsign</th>
-                  <th className="p-2 text-right">CW</th>
-                  <th className="p-2 text-right">Phone</th>
-                  <th className="p-2 text-right">Digital</th>
-                  <th className="p-2 text-right font-bold">Total QSOs</th>
-                  <th className="p-2 text-right">Active Hours</th>
-                  <th className="p-2 text-right">% Share</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 font-mono">
-                {operatorStats.map((op, i) => (
-                  <tr key={op.callsign}>
-                    <td className="p-2 font-sans font-bold text-slate-500">#{i + 1}</td>
-                    <td className="p-2 font-bold font-sans text-amber-900">{op.callsign}</td>
-                    <td className="p-2 text-right">{op.cwQsos}</td>
-                    <td className="p-2 text-right">{op.phoneQsos}</td>
-                    <td className="p-2 text-right">{op.digitalQsos}</td>
-                    <td className="p-2 text-right font-bold text-slate-900">{op.totalQsos}</td>
-                    <td className="p-2 text-right text-slate-600">{op.activeHours} hrs</td>
-                    <td className="p-2 text-right text-slate-600">{op.pctOfTotal}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Station Rig Comparison Table */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-slate-800 uppercase">Transmitter Station Profiles</h3>
-            <table className="w-full text-left text-xs border border-slate-300">
-              <thead className="bg-slate-100 font-bold uppercase border-b border-slate-300">
-                <tr>
-                  <th className="p-2">Station Identifier</th>
-                  <th className="p-2 text-right">CW</th>
-                  <th className="p-2 text-right">Phone</th>
-                  <th className="p-2 text-right">Digital</th>
-                  <th className="p-2 text-right font-bold">Total QSOs</th>
-                  <th className="p-2 text-right">% Share</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 font-mono">
-                {stationStats.map((st) => (
-                  <tr key={st.name}>
-                    <td className="p-2 font-bold font-sans text-sky-900">{st.name}</td>
-                    <td className="p-2 text-right">{st.cwQsos}</td>
-                    <td className="p-2 text-right">{st.phoneQsos}</td>
-                    <td className="p-2 text-right">{st.digitalQsos}</td>
-                    <td className="p-2 text-right font-bold text-slate-900">{st.totalQsos}</td>
-                    <td className="p-2 text-right text-slate-600">{st.pctOfTotal}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ interface HeaderProps {
   onLoadSamples: () => void;
   onReset: () => void;
   onOpenDiagnostics: () => void;
-  onExportPdf: (type: 'main' | 'gota') => void;
+  onExportPdf: () => void;
   hasQsos: boolean;
   hasGotaQsos: boolean;
 }
@@ -18,9 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   hasQsos,
   hasGotaQsos,
 }) => {
-  const isTestingMode =
-    import.meta.env.DEV ||
-    (typeof window !== 'undefined' && window.location.search.includes('test=true'));
+  // Test mode is strictly disabled in production builds
+  const isDevMode = import.meta.env.DEV;
 
   return (
     <header className="no-print bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3 shadow-lg">
@@ -45,12 +44,12 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center flex-wrap gap-2">
-          {isTestingMode && (
+          {isDevMode && (
             <>
               <button
                 onClick={onLoadSamples}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-                title="Load sample Field Day ADIF logs (Dev/Test mode)"
+                title="Load sample Field Day ADIF logs (Development mode only)"
               >
                 Load Sample Logs
               </button>
@@ -58,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onOpenDiagnostics}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 transition"
-                title="Run analytics diagnostic assertion tests (Dev/Test mode)"
+                title="Run analytics diagnostic assertion tests (Development mode only)"
               >
                 <ShieldCheck className="w-4 h-4 text-indigo-400" />
                 Verify Analytics
@@ -66,9 +65,9 @@ export const Header: React.FC<HeaderProps> = ({
             </>
           )}
 
-          {hasQsos && (
+          {(hasQsos || hasGotaQsos) && (
             <button
-              onClick={() => onExportPdf('main')}
+              onClick={onExportPdf}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/20 transition"
             >
               <Download className="w-4 h-4" />
@@ -76,17 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {hasGotaQsos && (
-            <button
-              onClick={() => onExportPdf('gota')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-600/20 transition"
-            >
-              <Download className="w-4 h-4" />
-              GOTA Report PDF
-            </button>
-          )}
-
-          {hasQsos && (
+          {(hasQsos || hasGotaQsos) && (
             <button
               onClick={onReset}
               className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"

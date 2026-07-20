@@ -46,12 +46,11 @@
   background: #0f172a !important;
 }
 
-/* Fixed-ratio A4 Printable Page Containers (794px x 1123px = 1:1.414 A4 ratio at 96 DPI) */
+/* Fixed-ratio A4 Printable Page Containers */
 .a4-page {
   width: 794px !important;
-  height: 1123px !important;
+  min-height: 1123px !important;
   max-width: 794px !important;
-  max-height: 1123px !important;
   margin: 0 auto 30px auto;
   padding: 40px !important;
   box-sizing: border-box !important;
@@ -60,12 +59,25 @@
   color: #0f172a !important;
 }
 
+/* Chrome / Browser Print CSS Rules */
+@page {
+  size: A4 portrait;
+  margin: 0;
+  /* Forces Chrome print dialog margins to 0 by default */
+}
+
 @media print {
+
+  html,
   body {
-    background: #ffffff !important;
-    color: #000000 !important;
+    width: 210mm !important;
+    height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   header,
@@ -86,21 +98,30 @@
     width: 100% !important;
   }
 
+  #main-report-print-container {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
   .a4-page {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-width: 210mm !important;
+    max-height: 297mm !important;
+    min-height: 297mm !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 15mm !important;
-    page-break-after: always;
-    break-after: page;
+    padding: 12mm 15mm !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    page-break-after: always !important;
+    break-after: page !important;
   }
 
   .a4-page:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }
