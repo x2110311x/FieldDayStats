@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FieldDayConfig } from '../types';
 import { Award, ChevronDown, ChevronUp, Users, Zap, ExternalLink, Search, Loader2 } from 'lucide-react';
 import { lookupCallsign } from '../services/geo/callsignLookup';
+import { formatGridInput, isValidGrid } from '../services/geo/maidenhead';
 
 interface ScoringFormProps {
   config: FieldDayConfig;
@@ -166,14 +167,24 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Home Grid Locator</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">Home Grid Locator (4-Char Maidenhead)</label>
           <input
             type="text"
-            value={config.homeGrid}
-            onChange={(e) => updateConfig('homeGrid', e.target.value.toUpperCase())}
+            maxLength={4}
+            value={config.homeGrid || ''}
+            onChange={(e) => updateConfig('homeGrid', formatGridInput(e.target.value))}
             placeholder="e.g. FN31"
-            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none focus:border-sky-500"
+            className={`w-full bg-slate-950 border rounded-md px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none ${
+              config.homeGrid && !isValidGrid(config.homeGrid)
+                ? 'border-rose-500/80 focus:border-rose-500'
+                : 'border-slate-800 focus:border-sky-500'
+            }`}
           />
+          {config.homeGrid && !isValidGrid(config.homeGrid) && (
+            <span className="text-[10px] text-rose-400 mt-1 block font-medium">
+              Must be XX## format (2 letters, 2 numbers like FN31)
+            </span>
+          )}
         </div>
 
         <div>

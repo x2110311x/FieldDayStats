@@ -1,7 +1,4 @@
-/**
- * Client-Side Amateur Radio Callsign & License Lookup Service.
- * Uses callook.info (FCC database API with CORS enabled) with offline fallback.
- */
+import { latLngToGrid, isValidGrid } from './maidenhead';
 
 export interface CallsignLookupResult {
   callsign: string;
@@ -14,18 +11,33 @@ export interface CallsignLookupResult {
   lng?: number;
 }
 
-const CALL_DISTRICT_FALLBACKS: Record<string, { grid: string; section: string; name: string }> = {
-  '1': { grid: 'FN31', section: 'CT', name: 'New England Amateur Radio Club' },
-  '2': { grid: 'FN20', section: 'NNJ', name: 'Hudson Valley Amateur Radio Club' },
-  '3': { grid: 'FM19', section: 'MDC', name: 'Tri-State Amateur Radio Association' },
-  '4': { grid: 'EM73', section: 'GA', name: 'Southeastern Amateur Radio Club' },
-  '5': { grid: 'EM12', section: 'NTX', name: 'West Gulf Amateur Radio Club' },
-  '6': { grid: 'DM04', section: 'LAX', name: 'Pacific Amateur Radio Club' },
-  '7': { grid: 'CN87', section: 'WWA', name: 'Northwest Amateur Radio Society' },
-  '8': { grid: 'EN91', section: 'OH', name: 'Great Lakes Amateur Radio Club' },
-  '9': { grid: 'EN51', section: 'IL', name: 'Central Amateur Radio Club' },
-  '0': { grid: 'EN34', section: 'MN', name: 'Midwest Amateur Radio Club' },
-};
+/**
+ * Looks up Maidenhead Grid Square from a 5-digit US ZIP code using zippopotam.us API.
+ * Returns undefined if zip lookup fails.
+ */
+export async function lookupGridFromZip(zipInput: string): Promise<string | undefined> {
+  const cleanZip = zipInput.trim().replace(/[^\d]/g, '');
+  if (!cleanZip || cleanZip.length < 5) return undefined;
+
+  const fiveDigitZip = cleanZip.substring(0, 5);
+  try {
+    const res = await fetch(`https://api.zippopotam.us/us/${fiveDigitZip}`);
+    if (res.ok) {
+      const data = await res.json();
+      const place = data?.places?.[0];
+      if (place && place.latitude && place.longitude) {
+        const lat = parseFloat(place.latitude);
+        const lng = parseFloat(place.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          return latLngToGrid(lat, lng, 4);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('ZIP code grid lookup error:', err);
+  }
+  return undefined;
+}
 
 export async function lookupCallsign(rawCall: string): Promise<CallsignLookupResult | null> {
   const cleanCall = rawCall.trim().toUpperCase().split('/')[0].split('-')[0];
@@ -36,9 +48,32 @@ export async function lookupCallsign(rawCall: string): Promise<CallsignLookupRes
     if (res.ok) {
       const data = await res.json();
       if (data && data.status === 'VALID') {
-        const grid = data.location?.gridsquare ? data.location.gridsquare.toUpperCase() : undefined;
+        let grid = data.location?.gridsquare ? data.location.gridsquare.toUpperCase() : undefined;
         const name = data.name || (data.trustee?.name ? `${data.trustee.name} Club` : undefined);
         const state = data.address?.line2?.split(',')[1]?.trim()?.substring(0, 2)?.toUpperCase();
+        const lat = data.location?.latitude ? parseFloat(data.location.latitude) : undefined;
+        const lng = data.location?.longitude ? parseFloat(data.location.longitude) : undefined;
+
+        // If grid square was not provided directly, calculate from lat/lng if available
+        if (!grid && lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+          grid = latLngToGrid(lat, lng, 4);
+        }
+
+        // If grid square is still not available, check for ZIP code in address line
+        if (!grid && data.address?.line2) {
+          const zipMatch = /\b(\d{5})(?:-\d{4})?\b/.exec(data.address.line2);
+          if (zipMatch) {
+            grid = await lookupGridFromZip(zipMatch[1]);
+          }
+        }
+
+        // Ensure grid square is valid 4-character Maidenhead (XX##)
+        if (grid) {
+          grid = grid.substring(0, 4);
+          if (!isValidGrid(grid)) {
+            grid = undefined;
+          }
+        }
 
         return {
           callsign: cleanCall,
@@ -46,24 +81,20 @@ export async function lookupCallsign(rawCall: string): Promise<CallsignLookupRes
           type: data.type,
           grid,
           section: state,
-          lat: data.location?.latitude ? parseFloat(data.location.latitude) : undefined,
-          lng: data.location?.longitude ? parseFloat(data.location.longitude) : undefined,
+          lat,
+          lng,
         };
       }
     }
   } catch (err) {
-    console.warn('Callsign API lookup error, using fallback:', err);
+    console.warn('Callsign API lookup error:', err);
   }
 
-  // Fallback estimation by Call District number (e.g. W8LKY -> district 8)
-  const numMatch = /\d/.exec(cleanCall);
-  const districtDigit = numMatch ? numMatch[0] : '1';
-  const fallback = CALL_DISTRICT_FALLBACKS[districtDigit] || CALL_DISTRICT_FALLBACKS['1'];
-
+  // If lookup fails or yields no data, return callsign with details left blank
   return {
     callsign: cleanCall,
     name: undefined,
-    grid: fallback.grid,
-    section: fallback.section,
+    grid: undefined,
+    section: undefined,
   };
 }

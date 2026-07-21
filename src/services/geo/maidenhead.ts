@@ -210,6 +210,32 @@ const ITU_PREFIX_COORDS: Record<string, LatLng> = {
 const SORTED_DX_PREFIXES = Object.keys(ITU_PREFIX_COORDS).sort((a, b) => b.length - a.length);
 
 /**
+ * Validates if a string is a valid 4-character Maidenhead Grid (e.g. EN90, FN31).
+ * Format: 2 letters (A-R) followed by 2 digits (0-9).
+ */
+export function isValidGrid(grid?: string): boolean {
+  if (!grid || typeof grid !== 'string') return false;
+  return /^[A-R]{2}[0-9]{2}$/i.test(grid.trim());
+}
+
+/**
+ * Enforces strict XX## Maidenhead grid format (2 letters A-Z + 2 numbers 0-9).
+ */
+export function formatGridInput(input: string): string {
+  const clean = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  let result = '';
+  for (let i = 0; i < clean.length && result.length < 4; i++) {
+    const char = clean[i];
+    if (result.length < 2) {
+      if (/[A-Z]/.test(char)) result += char;
+    } else {
+      if (/[0-9]/.test(char)) result += char;
+    }
+  }
+  return result;
+}
+
+/**
  * Converts Maidenhead Grid Locator to Lat/Lng center point.
  */
 export function gridToLatLng(grid?: string): LatLng | null {
@@ -242,6 +268,46 @@ export function gridToLatLng(grid?: string): LatLng | null {
     lat: parseFloat(lat.toFixed(4)),
     lng: parseFloat(lng.toFixed(4)),
   };
+}
+
+/**
+ * Converts Lat/Lng coordinates to Maidenhead Grid Locator (4 or 6 characters).
+ */
+export function latLngToGrid(lat: number, lng: number, precision: 4 | 6 = 4): string {
+  const adjLng = lng + 180;
+  const adjLat = lat + 90;
+
+  const fieldA = Math.floor(adjLng / 20);
+  const fieldB = Math.floor(adjLat / 10);
+
+  const charA = String.fromCharCode(65 + Math.min(Math.max(fieldA, 0), 17));
+  const charB = String.fromCharCode(65 + Math.min(Math.max(fieldB, 0), 17));
+
+  const remLng = adjLng - fieldA * 20;
+  const remLat = adjLat - fieldB * 10;
+
+  const squareA = Math.floor(remLng / 2);
+  const squareB = Math.floor(remLat / 1);
+
+  const numA = Math.min(Math.max(squareA, 0), 9);
+  const numB = Math.min(Math.max(squareB, 0), 9);
+
+  let grid = `${charA}${charB}${numA}${numB}`;
+
+  if (precision === 6) {
+    const remSubLng = remLng - numA * 2;
+    const remSubLat = remLat - numB * 1;
+
+    const subA = Math.floor(remSubLng * 12);
+    const subB = Math.floor(remSubLat * 24);
+
+    const charSubA = String.fromCharCode(65 + Math.min(Math.max(subA, 0), 23));
+    const charSubB = String.fromCharCode(65 + Math.min(Math.max(subB, 0), 23));
+
+    grid += `${charSubA}${charSubB}`;
+  }
+
+  return grid;
 }
 
 /**
