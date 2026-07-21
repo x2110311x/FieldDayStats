@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   BookOpen,
   Info,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck
 } from 'lucide-react';
 
 interface InstructionsModalProps {
@@ -95,6 +96,16 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                   <h4 className="font-semibold text-sm text-sky-300 mb-1">Welcome to Field Day Analytics</h4>
                   <p>
                     This application analyzes your amateur radio station's Standard ADIF log files, calculates estimated ARRL Field Day contest scores, displays operational analytics, and generates print-ready summary reports.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 flex gap-3">
+                <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-sm text-emerald-300 mb-1">100% On-Device & Private</h4>
+                  <p>
+                    All log parsing, analytics computations, callsign lookups, and PDF report generation occur strictly locally in your browser. No QSO data or personal information is ever uploaded to a server or saved externally.
                   </p>
                 </div>
               </div>

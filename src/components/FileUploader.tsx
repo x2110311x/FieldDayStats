@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface FileUploaderProps {
   onMainLogLoaded: (content: string, filename: string) => void;
@@ -146,6 +146,14 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           {errorMsg}
         </div>
       )}
+
+      {/* On-device processing & privacy assurance notice */}
+      <div className="md:col-span-2 flex items-center justify-center gap-2 text-xs text-slate-400 bg-slate-900/40 border border-slate-800/60 rounded-lg py-2 px-4 text-center">
+        <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+        <span>
+          <strong className="text-slate-200">100% On-Device & Private:</strong> All log processing and report generation happen locally in your browser. No ADIF files, logs, or operational statistics are ever uploaded or stored on any server.
+        </span>
+      </div>
     </div>
   );
 };
