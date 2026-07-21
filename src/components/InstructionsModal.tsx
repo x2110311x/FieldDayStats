@@ -65,7 +65,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 bg-slate-950/60 px-4 pt-2 overflow-x-auto gap-1">
+        <div className="flex border-b border-slate-800 bg-slate-950/60 px-4 pt-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -73,9 +73,9 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-t-lg text-xs font-semibold whitespace-nowrap transition border-t border-x ${
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-t-lg text-xs font-semibold whitespace-nowrap transition border-t border-x relative ${
                   isActive
-                    ? 'bg-slate-900 border-slate-700 text-sky-400 border-b-slate-900 -mb-[1px]'
+                    ? 'bg-slate-900 border-slate-700 text-sky-400 border-b-slate-900 -mb-px z-10'
                     : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
               >
