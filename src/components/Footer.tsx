@@ -71,7 +71,7 @@ export const Footer: React.FC = () => {
           <div className="flex items-center gap-3 flex-wrap">
             {/* Report Issue Email */}
             <a
-              href="mailto:alex@ke8vxg.radio?subject=Field%20Day%20Analytics%20Feedback"
+              href="mailto:issues@alexsweeney.tech?subject=Field%20Day%20Analytics%20Feedback"
               className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-800 hover:border-slate-700 transition shadow-sm"
               title="Report an issue or send feedback via email"
             >
