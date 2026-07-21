@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, X, ExternalLink, Coffee } from 'lucide-react';
+import { APP_NAME } from '../constants';
 
 interface DonationModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({ isOpen, onClose })
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                Support Field Day Stats
+                Support {APP_NAME}
                 <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
               </h2>
               <p className="text-xs text-slate-400">
@@ -40,7 +41,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({ isOpen, onClose })
 
         {/* Informational Message */}
         <p className="text-xs text-slate-300 leading-relaxed flex-shrink-0">
-          Field Day Stats is 100% free and open-source for the amateur radio community. If this app helped generate your club's report, consider leaving a tip on Ko-fi to support continuous development and hosting!
+          {APP_NAME} is 100% free and open-source for the amateur radio community. If this app helped generate your club's report, consider leaving a tip on Ko-fi to support continuous development and hosting!
         </p>
 
         {/* Embedded Ko-Fi Tip Panel */}
