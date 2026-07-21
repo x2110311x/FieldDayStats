@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Globe } from 'lucide-react';
+import { Github, Globe, Mail } from 'lucide-react';
 import { APP_VERSION } from '../constants';
 
 export const Footer: React.FC = () => {
@@ -22,7 +22,8 @@ export const Footer: React.FC = () => {
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               Open source Field Day analytics & PDF report generator ·{' '}
-              <span className="font-mono text-slate-400 font-semibold">v{APP_VERSION}</span> ·{' '}
+              <span className="font-mono text-slate-400 font-semibold">v{APP_VERSION}</span>{' '}
+              <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Beta</span> ·{' '}
               <a
                 href="https://fdstats.ke8vxg.radio"
                 target="_blank"
@@ -36,6 +37,16 @@ export const Footer: React.FC = () => {
 
           {/* Right: Quick Links & Ko-fi Support */}
           <div className="flex items-center gap-3 flex-wrap">
+            {/* Report Issue Email */}
+            <a
+              href="mailto:alex@ke8vxg.radio?subject=Field%20Day%20Analytics%20Feedback"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-800 hover:border-slate-700 transition shadow-sm"
+              title="Report an issue or send feedback via email"
+            >
+              <Mail className="w-4 h-4 text-amber-400" />
+              <span>Report Issue</span>
+            </a>
+
             {/* GitHub Repo */}
             <a
               href="https://github.com/x2110311x/FieldDayStats"
