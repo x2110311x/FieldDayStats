@@ -133,9 +133,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             </div>
             <h3 className="text-sm font-bold text-slate-100">Drop Optional GOTA ADIF Log</h3>
             <p className="text-xs text-slate-400">
-              Upload separate Get On The Air station <code className="text-amber-300 bg-slate-950 px-1 py-0.5 rounded">.adi</code> log
+              Upload separate Get On The Air station <code className="text-amber-300 bg-slate-950 px-1 py-0.5 rounded">.adi</code> or <code className="text-amber-300 bg-slate-950 px-1 py-0.5 rounded">.adif</code> file
             </p>
-            <span className="inline-block text-[11px] text-slate-400">Generates standalone GOTA analytics</span>
+            <span className="inline-block text-[11px] text-slate-400">Includes GOTA section in report</span>
           </div>
         )}
       </div>
