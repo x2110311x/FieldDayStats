@@ -59,6 +59,12 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   const gotaOperators = getOperatorLeaderboard(gotaQsos);
   const totalReportPages = hasGotaQsos ? 5 : 4;
 
+  const powerCategoryLabel = config.powerCategory === 'HIGH_500W'
+    ? 'High Power (>100W, 1X Mult)'
+    : config.powerCategory === 'QRP_5W'
+    ? 'QRP (5W, 5X Mult)'
+    : 'Low Power (100W, 2X Mult)';
+
   // Total Bonus Points (All bonuses including GOTA per-QSO bonus)
   const arrlTotalBonusPoints = score.totalBonusPoints + score.gotaQsoBonusPoints;
 
@@ -141,12 +147,14 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 <h1 className="text-lg font-black text-slate-900 uppercase tracking-tight leading-none mt-0.5">
                   {config.clubName}
                 </h1>
-                <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-700 mt-1 font-mono">
+                <div className="flex items-center gap-2 text-[10.5px] font-semibold text-slate-700 mt-1 font-mono">
                   <span>Call: <strong className="text-slate-950">{clubCall}</strong></span>
                   <span>•</span>
                   <span>GOTA Call: <strong className="text-slate-950">{config.gotaCall || '(NONE)'}</strong></span>
                   <span>•</span>
-                  <span>Class: <strong className="text-slate-950">{combinedClass} {config.homeSection || 'CT'} ({mult}X Mult)</strong></span>
+                  <span>Class: <strong className="text-slate-950">{combinedClass} {config.homeSection || 'CT'}</strong></span>
+                  <span>•</span>
+                  <span className="text-sky-800 font-bold">{powerCategoryLabel}</span>
                   <span>•</span>
                   <span>Grid: <strong className="text-slate-950">{config.homeGrid || 'FN31'}</strong></span>
                 </div>
@@ -200,20 +208,25 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                     <div className="border-t border-slate-300 pt-1 flex justify-between font-bold text-slate-900">
                       <span>Total Raw QSO Points:</span> <span>{score.rawQsoPoints} pts</span>
                     </div>
-                    <div className="flex justify-between font-bold text-sky-800 border-t border-slate-200 pt-1">
-                      <span>Claimed Score ({mult}x Mult):</span> <span>{score.multipliedQsoPoints.toLocaleString()} pts</span>
+                    <div className="border-t border-slate-200 pt-1 space-y-0.5">
+                      <div className="flex justify-between font-bold text-sky-800">
+                        <span>Claimed QSO Score:</span> <span>{score.multipliedQsoPoints.toLocaleString()} pts</span>
+                      </div>
+                      <div className="text-[9px] text-sky-700 font-normal text-right">
+                        ({score.rawQsoPoints} raw pts × {mult}X • {powerCategoryLabel})
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="border-t border-slate-200 pt-1.5 text-[9.5px] text-slate-600 space-y-0.5">
                   <div className="flex justify-between font-semibold">
-                    <span>Main Station ({score.mainTotalQsos} QSOs):</span>
+                    <span>Main Station ({score.mainTotalQsos} QSOs × {mult}X):</span>
                     <span>{score.mainMultipliedQsoPoints.toLocaleString()} pts</span>
                   </div>
                   {score.gotaTotalQsos > 0 && (
                     <div className="flex justify-between font-semibold text-amber-900">
-                      <span>GOTA Station ({score.gotaTotalQsos} QSOs):</span>
+                      <span>GOTA Station ({score.gotaTotalQsos} QSOs × {mult}X):</span>
                       <span>{score.gotaMultipliedQsoPoints.toLocaleString()} pts</span>
                     </div>
                   )}

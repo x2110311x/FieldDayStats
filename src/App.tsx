@@ -89,6 +89,15 @@ export function App() {
   const handleGotaLogLoaded = (content: string, filename: string) => {
     const parsed = parseAdifLog(content, true);
     setGotaQsos(parsed);
+
+    const discoveredGotaCall = parsed.find((q) => q.station || q.operator);
+    if (discoveredGotaCall) {
+      const gCall = discoveredGotaCall.station || discoveredGotaCall.operator;
+      setConfig((prev) => ({
+        ...prev,
+        gotaCall: prev.gotaCall || gCall,
+      }));
+    }
   };
 
   const handleLoadSamples = () => {

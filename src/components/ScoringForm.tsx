@@ -113,6 +113,22 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
 
         <div>
           <label className="block text-xs font-semibold text-slate-400 mb-1">
+            GOTA Station Callsign <span className="text-slate-500 font-normal">(Optional)</span>
+          </label>
+          <input
+            type="text"
+            value={config.gotaCall || ''}
+            onChange={(e) => updateConfig('gotaCall', e.target.value.toUpperCase())}
+            placeholder="e.g. W1AW/GOTA or W1GOTA"
+            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-amber-400 focus:outline-none focus:border-amber-500"
+          />
+          <span className="text-[10px] text-slate-500 mt-1 block font-medium">
+            Displayed on ARRL submission report
+          </span>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
             Club / Group Name <span className="text-rose-400 font-bold">*</span>
           </label>
           <input
@@ -181,9 +197,9 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
             onChange={(e) => updateConfig('powerCategory', e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500"
           >
-            <option value="LOW_100W">100W or Less (Low Power - 2x Multiplier)</option>
-            <option value="QRP_5W">5W or Less (QRP - 5x Multiplier if Battery/Solar)</option>
-            <option value="HIGH_500W">Over 100W PEP (High Power - 1x Multiplier)</option>
+            <option value="LOW_100W">Low Power (100W max, 2X Multiplier)</option>
+            <option value="QRP_5W">QRP (5W max, 5X Multiplier)</option>
+            <option value="HIGH_500W">High Power (Over 100W PEP, 1X Multiplier)</option>
           </select>
         </div>
 
