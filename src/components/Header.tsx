@@ -1,10 +1,11 @@
 import React from 'react';
-import { Radio, ShieldCheck, Download, RefreshCw } from 'lucide-react';
+import { Radio, ShieldCheck, Download, RefreshCw, HelpCircle } from 'lucide-react';
 
 interface HeaderProps {
   onLoadSamples: () => void;
   onReset: () => void;
   onOpenDiagnostics: () => void;
+  onOpenInstructions: () => void;
   onExportPdf: () => void;
   hasQsos: boolean;
   hasGotaQsos: boolean;
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLoadSamples,
   onReset,
   onOpenDiagnostics,
+  onOpenInstructions,
   onExportPdf,
   hasQsos,
   hasGotaQsos,
@@ -44,6 +46,15 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center flex-wrap gap-2">
+          <button
+            onClick={onOpenInstructions}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+            title="Open application guide and instructions"
+          >
+            <HelpCircle className="w-4 h-4 text-sky-400" />
+            Instructions
+          </button>
+
           {isDevMode && (
             <>
               <button

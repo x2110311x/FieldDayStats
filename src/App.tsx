@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
 import { FileUploader } from './components/FileUploader';
 import { ScoringForm } from './components/ScoringForm';
@@ -10,6 +10,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { LogGrid } from './components/LogGrid';
 import { ReportPreview } from './components/ReportPreview';
 import { DiagnosticsModal } from './components/DiagnosticsModal';
+import { InstructionsModal } from './components/InstructionsModal';
 import { Footer } from './components/Footer';
 import { FieldDayConfig, QSO } from './types';
 import { DEFAULT_CONFIG, SAMPLE_CONFIG, SAMPLE_MAIN_ADIF, SAMPLE_GOTA_ADIF } from './constants';
@@ -18,6 +19,7 @@ import { calculateFieldDayScore } from './services/scoring/fieldDayScorer';
 import { getOperatorLeaderboard, getStationBreakdown } from './services/analytics/statsEngine';
 import { lookupCallsign } from './services/geo/callsignLookup';
 import { exportElementToPdf } from './services/pdf/reportGenerator';
+import { getCookie, setCookie } from './utils/cookieUtils';
 import { BarChart3, FileText, Radio, Award } from 'lucide-react';
 
 export function App() {
@@ -26,6 +28,15 @@ export function App() {
   const [config, setConfig] = useState<FieldDayConfig>(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'report'>('dashboard');
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
+  const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
+
+  useEffect(() => {
+    const seen = getCookie('fd_instructions_seen');
+    if (!seen) {
+      setIsInstructionsOpen(true);
+      setCookie('fd_instructions_seen', 'true', 365);
+    }
+  }, []);
 
   const handleMainLogLoaded = async (content: string, filename: string) => {
     const parsed = parseAdifLog(content, false);
@@ -116,6 +127,7 @@ export function App() {
         onLoadSamples={handleLoadSamples}
         onReset={handleReset}
         onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
+        onOpenInstructions={() => setIsInstructionsOpen(true)}
         onExportPdf={handleExportPdf}
         hasQsos={mainQsos.length > 0}
         hasGotaQsos={gotaQsos.length > 0}
@@ -340,6 +352,12 @@ export function App() {
         mainQsos={mainQsos}
         gotaQsos={gotaQsos}
         config={config}
+      />
+
+      {/* Instructions Modal */}
+      <InstructionsModal
+        isOpen={isInstructionsOpen}
+        onClose={() => setIsInstructionsOpen(false)}
       />
     </div>
   );
