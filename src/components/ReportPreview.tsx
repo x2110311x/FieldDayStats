@@ -28,29 +28,23 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 }) => {
   const hasMainQsos = mainQsos.length > 0;
   const hasGotaQsos = gotaQsos.length > 0;
-  const displayQsos = hasMainQsos ? mainQsos : gotaQsos;
+  const allQsos = [...mainQsos, ...gotaQsos];
+  const displayQsos = allQsos.length > 0 ? allQsos : mainQsos;
 
   const elementId = 'main-report-print-container';
   const pdfFilename = `${config.clubCall || 'W1AW'}_2026_FieldDay_Report.pdf`;
 
   const sweep = calculateSectionSweep(displayQsos);
   const matrix = buildBandModeMatrix(displayQsos);
+  const mainMatrix = buildBandModeMatrix(mainQsos);
+  const gotaMatrix = buildBandModeMatrix(gotaQsos);
+
   const timeline = calculateActivityTimeline(displayQsos);
   const totalQsos = displayQsos.length || 1;
 
-  // Mode breakdown
-  const phoneCount = Object.values(matrix).reduce((sum, r) => sum + r.phone, 0);
-  const cwCount = Object.values(matrix).reduce((sum, r) => sum + r.cw, 0);
-  const digitalCount = Object.values(matrix).reduce((sum, r) => sum + r.digital, 0);
-
-  const phonePct = parseFloat(((phoneCount / totalQsos) * 100).toFixed(1));
-  const cwPct = parseFloat(((cwCount / totalQsos) * 100).toFixed(1));
-  const digitalPct = parseFloat(((digitalCount / totalQsos) * 100).toFixed(1));
-
   // Active bands
-  const activeBands = BANDS_ORDER.filter((b) => (matrix[b]?.total || 0) > 0);
+  const activeBands = BANDS_ORDER.filter((b) => (matrix[b]?.total || 0) > 0 || (mainMatrix[b]?.total || 0) > 0);
 
-  const rawQsoPoints = cwCount * 2 + digitalCount * 2 + phoneCount * 1;
   const mult = config.powerCategory === 'HIGH_500W' ? 1 : config.powerCategory === 'QRP_5W' ? 5 : 2;
 
   const uniqueOpCount = operatorStats.length || 1;
@@ -61,12 +55,23 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   const combinedClass = `${config.transmitters || 1}${(config.entryClass || 'A').toUpperCase()}`;
 
   // GOTA Addendum Calculations
-  const gotaMatrix = buildBandModeMatrix(gotaQsos);
   const gotaSweep = calculateSectionSweep(gotaQsos);
   const gotaOperators = getOperatorLeaderboard(gotaQsos);
   const totalReportPages = hasGotaQsos ? 5 : 4;
 
-  // Helper for Conic Gradient Pie Chart
+  // Total Bonus Points (All bonuses including GOTA per-QSO bonus)
+  const arrlTotalBonusPoints = score.totalBonusPoints + score.gotaQsoBonusPoints;
+
+  // Mode breakdown for charts
+  const phoneCount = score.phoneQsos;
+  const cwCount = score.cwQsos;
+  const digitalCount = score.digitalQsos;
+
+  const phonePct = parseFloat(((phoneCount / totalQsos) * 100).toFixed(1));
+  const cwPct = parseFloat(((cwCount / totalQsos) * 100).toFixed(1));
+  const digitalPct = parseFloat(((digitalCount / totalQsos) * 100).toFixed(1));
+
+  // Mode Conic Gradient Pie Chart
   const phoneEnd = phonePct;
   const cwEnd = phoneEnd + cwPct;
   const modeConicGradient = `conic-gradient(#22c55e 0% ${phoneEnd}%, #3b82f6 ${phoneEnd}% ${cwEnd}%, #eab308 ${cwEnd}% 100%)`;
@@ -75,7 +80,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   const BAND_PIE_COLORS = ['#9333ea', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#6366f1', '#64748b'];
   let bandAccumulator = 0;
   const bandStops = activeBands.map((band, idx) => {
-    const pct = (matrix[band].total / totalQsos) * 100;
+    const pct = ((matrix[band]?.total || 0) / totalQsos) * 100;
     const start = bandAccumulator;
     bandAccumulator += pct;
     const color = BAND_PIE_COLORS[idx % BAND_PIE_COLORS.length];
@@ -101,168 +106,195 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   return (
     <div className="space-y-6">
       {/* Export Toolbar */}
-      <div className="no-print bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="no-print bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-md flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
             <Printer className="w-4 h-4 text-sky-400" />
             Field Day Operations Report
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Click <strong className="text-sky-400 font-semibold">Print / Save as PDF</strong> to launch your browser print window. Select <strong className="text-sky-400 font-mono">"Save as PDF"</strong> as your printer destination to download a PDF copy.
+            Formatted for 1-to-1 comparison with official ARRL web submissions. Click <strong className="text-sky-400 font-semibold">Print / Save as PDF</strong> to generate.
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-extrabold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-600/20 transition hover:scale-105 active:scale-95 cursor-pointer"
-          >
-            <Printer className="w-4 h-4" />
-            Print / Save as PDF
-          </button>
-        </div>
+
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-extrabold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-600/20 transition hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+        >
+          <Printer className="w-4 h-4" />
+          Print / Save as PDF
+        </button>
       </div>
 
       {/* A4 Report Printable Document Container */}
       <div id={elementId} className="space-y-8 bg-slate-950 print:bg-transparent p-2 sm:p-6 rounded-xl print:p-0 print:rounded-none">
-        {/* ================= PAGE 1: Executive Summary, Score Breakdown & Full Matrix ================= */}
+        
+        {/* ================= PAGE 1: ARRL-Style Executive Summary & Matrix ================= */}
         <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
-          <div className="space-y-5">
+          <div className="space-y-3.5">
             {/* Header */}
-            <div className="border-b-2 border-slate-900 pb-3 flex items-start justify-between">
+            <div className="border-b-2 border-slate-900 pb-2 flex items-start justify-between">
               <div>
                 <span className="text-[10px] font-extrabold tracking-widest text-sky-700 uppercase">
                   ARRL FIELD DAY OPERATIONS REPORT
                 </span>
-                <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none mt-1">
+                <h1 className="text-lg font-black text-slate-900 uppercase tracking-tight leading-none mt-0.5">
                   {config.clubName}
                 </h1>
-                <div className="flex items-center gap-3 text-xs font-semibold text-slate-700 mt-2 font-mono">
-                  <span>Callsign: <strong className="text-slate-950">{clubCall}</strong></span>
+                <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-700 mt-1 font-mono">
+                  <span>Call: <strong className="text-slate-950">{clubCall}</strong></span>
                   <span>•</span>
-                  <span>Exchange: <strong className="text-slate-950">{combinedClass} {config.homeSection || 'CT'}</strong></span>
+                  <span>GOTA Call: <strong className="text-slate-950">{config.gotaCall || '(NONE)'}</strong></span>
                   <span>•</span>
-                  <span>Home Grid: <strong className="text-slate-950">{config.homeGrid || 'FN31'}</strong></span>
+                  <span>Class: <strong className="text-slate-950">{combinedClass} {config.homeSection || 'CT'} ({mult}X Mult)</strong></span>
+                  <span>•</span>
+                  <span>Grid: <strong className="text-slate-950">{config.homeGrid || 'FN31'}</strong></span>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] font-bold text-slate-500 uppercase">ARRL Field Day</div>
-                <div className="text-sm font-black text-slate-900">June 27-28, 2026</div>
+                <div className="text-[9px] font-bold text-slate-500 uppercase">ARRL Field Day</div>
+                <div className="text-xs font-black text-slate-900">June 27-28, 2026</div>
               </div>
             </div>
 
-            {/* KPI Summary Grid */}
-            <div className="grid grid-cols-4 gap-3 text-center">
-              <div className="bg-slate-100 border border-slate-300 rounded p-2">
-                <div className="text-[9px] font-bold text-slate-500 uppercase">Total Score</div>
-                <div className="text-lg font-black text-slate-900 font-mono">
+            {/* Top KPI Bar (Combined Totals) */}
+            <div className="grid grid-cols-4 gap-2.5 text-center">
+              <div className="bg-slate-100 border border-slate-300 rounded p-1.5">
+                <div className="text-[8.5px] font-bold text-slate-500 uppercase">Preliminary Total Score</div>
+                <div className="text-base font-black text-slate-950 font-mono">
                   {score.totalScore.toLocaleString()}
                 </div>
               </div>
-              <div className="bg-slate-100 border border-slate-300 rounded p-2">
-                <div className="text-[9px] font-bold text-slate-500 uppercase">Total QSOs</div>
-                <div className="text-lg font-black text-slate-900 font-mono">{mainQsos.length.toLocaleString()}</div>
+              <div className="bg-slate-100 border border-slate-300 rounded p-1.5">
+                <div className="text-[8.5px] font-bold text-slate-500 uppercase">Total QSOs (Main + GOTA)</div>
+                <div className="text-base font-black text-slate-900 font-mono">
+                  {score.totalQsos.toLocaleString()}
+                  <span className="text-[9px] font-normal text-slate-600 block mt-0.5">({score.mainTotalQsos} Main + {score.gotaTotalQsos} GOTA)</span>
+                </div>
               </div>
-              <div className="bg-slate-100 border border-slate-300 rounded p-2">
-                <div className="text-[9px] font-bold text-slate-500 uppercase">Power Mult</div>
-                <div className="text-lg font-black text-slate-900 font-mono">{mult}x</div>
+              <div className="bg-slate-100 border border-slate-300 rounded p-1.5">
+                <div className="text-[8.5px] font-bold text-slate-500 uppercase">Participation Rate</div>
+                <div className="text-base font-black text-emerald-800 font-mono">
+                  {participationIndex}%
+                  <span className="text-[9px] font-normal text-slate-600 block mt-0.5">({uniqueOpCount} ops / {totalParticipants} attendees)</span>
+                </div>
               </div>
-              <div className="bg-slate-100 border border-slate-300 rounded p-2">
-                <div className="text-[9px] font-bold text-slate-500 uppercase">Sections Contacted</div>
-                <div className="text-lg font-black text-slate-900 font-mono">{sweep.workedCount}/86</div>
-              </div>
-            </div>
-
-            {/* Participation KPI */}
-            <div className="bg-emerald-50 border border-emerald-200 rounded p-2.5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-700" />
-                <span className="text-xs font-bold text-emerald-950">Participation</span>
-              </div>
-              <div className="text-xs font-mono font-bold text-emerald-800">
-                {participationIndex}% ({uniqueOpCount} operators / {totalParticipants} attendees)
+              <div className="bg-slate-100 border border-slate-300 rounded p-1.5">
+                <div className="text-[8.5px] font-bold text-slate-500 uppercase">Sections Contacted</div>
+                <div className="text-base font-black text-slate-900 font-mono">{sweep.workedCount}/86</div>
               </div>
             </div>
 
-            {/* Score Calculation Breakdown */}
-            <div className="border border-slate-300 rounded p-3 space-y-2">
-              <h3 className="text-xs font-bold text-slate-900 uppercase">ARRL Field Day Score Breakdown</h3>
-              <div className="grid grid-cols-2 gap-4 text-xs font-mono">
-                <div className="space-y-1 border-r border-slate-200 pr-3">
-                  <div className="flex justify-between"><span>Phone QSOs ({score.mainPhoneQsos} × 1 pt):</span> <span>{score.mainPhoneQsos} pts</span></div>
-                  <div className="flex justify-between"><span>CW QSOs ({score.mainCwQsos} × 2 pts):</span> <span>{score.mainCwQsos * 2} pts</span></div>
-                  <div className="flex justify-between"><span>Digital QSOs ({score.mainDigitalQsos} × 2 pts):</span> <span>{score.mainDigitalQsos * 2} pts</span></div>
-                  <div className="border-t border-slate-300 pt-1 flex justify-between font-bold text-slate-900">
-                    <span>Main Raw QSO Points:</span> <span>{score.mainRawQsoPoints} pts</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-sky-800">
-                    <span>Main Multiplied QSO Points ({score.powerMultiplier}x):</span> <span>{score.mainMultipliedQsoPoints.toLocaleString()} pts</span>
+            {/* Score Summary & Itemized Bonus Breakdown (2 Columns) */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Left Box: Score Calculation Summary */}
+              <div className="border border-slate-300 rounded p-2.5 space-y-1.5 font-mono text-[10.5px] bg-slate-50 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-[10px] font-bold text-slate-900 uppercase border-b border-slate-200 pb-1">
+                    ARRL Score Summary
+                  </h3>
+                  <div className="space-y-1 pt-1.5">
+                    <div className="flex justify-between"><span>CW QSOs ({score.cwQsos} × 2 pts):</span> <span className="font-bold text-blue-900">{score.cwPoints} pts</span></div>
+                    <div className="flex justify-between"><span>Digital QSOs ({score.digitalQsos} × 2 pts):</span> <span className="font-bold text-amber-900">{score.digitalPoints} pts</span></div>
+                    <div className="flex justify-between"><span>Phone QSOs ({score.phoneQsos} × 1 pt):</span> <span className="font-bold text-emerald-900">{score.phonePoints} pts</span></div>
+                    <div className="border-t border-slate-300 pt-1 flex justify-between font-bold text-slate-900">
+                      <span>Total Raw QSO Points:</span> <span>{score.rawQsoPoints} pts</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-sky-800 border-t border-slate-200 pt-1">
+                      <span>Claimed Score ({mult}x Mult):</span> <span>{score.multipliedQsoPoints.toLocaleString()} pts</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px]"><span>Claimed Bonus Points (Excl. GOTA):</span> <strong className="text-emerald-700">+{score.totalBonusPoints} pts</strong></div>
+                <div className="border-t border-slate-200 pt-1.5 text-[9.5px] text-slate-600 space-y-0.5">
+                  <div className="flex justify-between font-semibold">
+                    <span>Main Station ({score.mainTotalQsos} QSOs):</span>
+                    <span>{score.mainMultipliedQsoPoints.toLocaleString()} pts</span>
+                  </div>
                   {score.gotaTotalQsos > 0 && (
-                    <div className="border-t border-slate-200 pt-1 space-y-0.5">
-                      <div className="flex justify-between text-[11px] font-bold text-amber-900">
-                        <span>GOTA Station Total:</span>
-                        <span>+{score.gotaTotalPoints} pts</span>
-                      </div>
-                      <div className="flex justify-between text-[10px] text-slate-600 pl-2">
-                        <span>• GOTA QSO Credit ({score.powerMultiplier}x):</span>
-                        <span>+{score.gotaMultipliedQsoPoints} pts</span>
-                      </div>
-                      <div className="flex justify-between text-[10px] text-slate-600 pl-2">
-                        <span>• GOTA Bonus ({score.gotaQsoCount} × 5 pts):</span>
-                        <span>+{score.gotaQsoBonusPoints} pts</span>
-                      </div>
+                    <div className="flex justify-between font-semibold text-amber-900">
+                      <span>GOTA Station ({score.gotaTotalQsos} QSOs):</span>
+                      <span>{score.gotaMultipliedQsoPoints.toLocaleString()} pts</span>
                     </div>
                   )}
-                  <div className="border-t-2 border-slate-900 pt-1 flex justify-between font-black text-sm text-slate-950">
-                    <span>TOTAL ESTIMATED SCORE:</span> <span>{score.totalScore.toLocaleString()} pts</span>
+                </div>
+              </div>
+
+              {/* Right Box: Itemized Bonus Points Checklist (Fully Visible, No Scrollbar) */}
+              <div className="border border-slate-300 rounded p-2.5 space-y-1 font-mono text-[9.5px] flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-1">
+                    <h3 className="text-[10px] font-bold text-slate-900 uppercase">Itemized Claimed Bonuses</h3>
+                    <span className="text-[10px] font-bold text-emerald-800">+{arrlTotalBonusPoints} pts</span>
+                  </div>
+                  <div className="space-y-0.5 pt-1">
+                    {score.bonusPointsItemized.map((b, idx) => (
+                      <div key={idx} className="flex justify-between border-b border-slate-100 py-0.5">
+                        <span className="text-slate-700 truncate pr-1">{b.label}</span>
+                        <strong className="text-emerald-800 shrink-0">+{b.points}</strong>
+                      </div>
+                    ))}
+                    {score.gotaQsoBonusPoints > 0 && (
+                      <div className="flex justify-between border-b border-slate-100 py-0.5 text-amber-900 font-semibold">
+                        <span className="truncate pr-1">GOTA bonus ({score.gotaQsoCount} QSOs × 5 pts)</span>
+                        <strong className="text-amber-800 shrink-0">+{score.gotaQsoBonusPoints}</strong>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Full Main Station Band & Mode Matrix Table */}
-            <div className="border border-slate-300 rounded p-3 space-y-2">
-              <h3 className="text-xs font-bold text-slate-900 uppercase">Band & Operating Mode Matrix</h3>
-              <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] border-b border-slate-300">
+            {/* Band & Operating Mode Matrix Table (Combined + Separate GOTA Row) */}
+            <div className="border border-slate-300 rounded p-2.5 space-y-1">
+              <h3 className="text-[10px] font-bold text-slate-900 uppercase">Band & Operating Mode Breakdown</h3>
+              <table className="w-full text-left text-[10.5px] font-mono">
+                <thead className="bg-slate-100 text-slate-700 uppercase text-[9.5px] border-b border-slate-300">
                   <tr>
-                    <th className="p-1.5">Band</th>
-                    <th className="p-1.5 text-right text-blue-800">CW QSOs</th>
-                    <th className="p-1.5 text-right text-emerald-800">Phone (SSB)</th>
-                    <th className="p-1.5 text-right text-amber-800">Digital</th>
-                    <th className="p-1.5 text-right font-bold text-slate-900">Total QSOs</th>
-                    <th className="p-1.5 text-right">% Share</th>
+                    <th className="p-1">Band</th>
+                    <th className="p-1 text-right text-blue-800">CW QSOs</th>
+                    <th className="p-1 text-right text-amber-800">Digital</th>
+                    <th className="p-1 text-right text-emerald-800">Phone (SSB)</th>
+                    <th className="p-1 text-right font-bold text-slate-900">Total QSOs</th>
+                    <th className="p-1 text-right">% Share</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 text-[11px]">
-                  {BANDS_ORDER.map((band) => {
-                    const row = matrix[band] || { cw: 0, phone: 0, digital: 0, total: 0 };
-                    const pct = displayQsos.length > 0 ? ((row.total / displayQsos.length) * 100).toFixed(1) : '0.0';
+                <tbody className="divide-y divide-slate-200 text-[10.5px]">
+                  {activeBands.map((band) => {
+                    const row = mainMatrix[band] || { cw: 0, phone: 0, digital: 0, total: 0 };
+                    if (row.total === 0) return null;
+                    const pct = ((row.total / totalQsos) * 100).toFixed(1);
 
                     return (
                       <tr key={band}>
-                        <td className="p-1.5 font-bold text-sky-800">{band}</td>
-                        <td className="p-1.5 text-right text-blue-900">{row.cw}</td>
-                        <td className="p-1.5 text-right text-emerald-900">{row.phone}</td>
-                        <td className="p-1.5 text-right text-amber-900">{row.digital}</td>
-                        <td className="p-1.5 text-right font-bold text-slate-900">{row.total}</td>
-                        <td className="p-1.5 text-right text-slate-600">{pct}%</td>
+                        <td className="p-1 font-bold text-sky-800">{band}</td>
+                        <td className="p-1 text-right text-blue-900">{row.cw}</td>
+                        <td className="p-1 text-right text-amber-900">{row.digital}</td>
+                        <td className="p-1 text-right text-emerald-900">{row.phone}</td>
+                        <td className="p-1 text-right font-bold text-slate-900">{row.total}</td>
+                        <td className="p-1 text-right text-slate-600">{pct}%</td>
                       </tr>
                     );
                   })}
+                  {score.gotaTotalQsos > 0 && (
+                    <tr className="bg-amber-50 font-semibold border-t-2 border-amber-300">
+                      <td className="p-1 font-bold text-amber-900">GOTA Station</td>
+                      <td className="p-1 text-right text-blue-900">{score.gotaCwQsos}</td>
+                      <td className="p-1 text-right text-amber-900">{score.gotaDigitalQsos}</td>
+                      <td className="p-1 text-right text-emerald-900">{score.gotaPhoneQsos}</td>
+                      <td className="p-1 text-right font-bold text-amber-950">{score.gotaTotalQsos}</td>
+                      <td className="p-1 text-right text-amber-900">{((score.gotaTotalQsos / totalQsos) * 100).toFixed(1)}%</td>
+                    </tr>
+                  )}
                 </tbody>
                 <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-400">
                   <tr>
-                    <td className="p-1.5 text-slate-900">TOTALS</td>
-                    <td className="p-1.5 text-right text-blue-900">{cwCount}</td>
-                    <td className="p-1.5 text-right text-emerald-900">{phoneCount}</td>
-                    <td className="p-1.5 text-right text-amber-900">{digitalCount}</td>
-                    <td className="p-1.5 text-right text-sky-900">{displayQsos.length}</td>
-                    <td className="p-1.5 text-right text-slate-900">100.0%</td>
+                    <td className="p-1 text-slate-900">TOTALS</td>
+                    <td className="p-1 text-right text-blue-900">{score.cwQsos}</td>
+                    <td className="p-1 text-right text-amber-900">{score.digitalQsos}</td>
+                    <td className="p-1 text-right text-emerald-900">{score.phoneQsos}</td>
+                    <td className="p-1 text-right text-slate-950">{score.totalQsos}</td>
+                    <td className="p-1 text-right text-slate-900">100.0%</td>
                   </tr>
                 </tfoot>
               </table>
@@ -270,7 +302,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           {/* Page Footer */}
-          <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
+          <div className="border-t border-slate-300 pt-1.5 text-[9.5px] text-slate-500 flex justify-between font-mono">
             <span>ARRL Field Day Operations Summary • Class {combinedClass} • Created with {APP_NAME} (fdstats.ke8vxg.radio)</span>
             <span>Page 1 of {totalReportPages}</span>
           </div>
