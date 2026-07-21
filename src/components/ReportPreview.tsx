@@ -6,6 +6,7 @@ import { BANDS_ORDER, buildBandModeMatrix, calculateSectionSweep, calculateActiv
 import { StaticQsoMap } from './StaticQsoMap';
 import { ArrlSectionMap } from './ArrlSectionMap';
 import { ErrorBoundary } from './ErrorBoundary';
+import { APP_NAME } from '../constants';
 
 interface ReportPreviewProps {
   config: FieldDayConfig;
@@ -257,7 +258,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
           {/* Page Footer */}
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>ARRL Field Day Operations Summary • Class {combinedClass} • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
+            <span>ARRL Field Day Operations Summary • Class {combinedClass} • Created with {APP_NAME} (fdstats.ke8vxg.radio)</span>
             <span>Page 1 of {totalReportPages}</span>
           </div>
         </div>
@@ -412,7 +413,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between">
-            <span>Activity & Distribution Analytics • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
+            <span>Activity & Distribution Analytics • Created with {APP_NAME} (fdstats.ke8vxg.radio)</span>
             <span>Page 2 of {totalReportPages}</span>
           </div>
         </div>
@@ -490,7 +491,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between shrink-0">
-            <span>ARRL Section Scorecard • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
+            <span>ARRL Section Scorecard • Created with {APP_NAME} (fdstats.ke8vxg.radio)</span>
             <span>Page 3 of {totalReportPages}</span>
           </div>
         </div>
@@ -643,7 +644,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
           </div>
 
           <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-500 flex justify-between shrink-0">
-            <span>ARRL Field Day Operations Summary • QSO Map & Operator Statistics • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
+            <span>ARRL Field Day Operations Summary • QSO Map & Operator Statistics • Created with {APP_NAME} (fdstats.ke8vxg.radio)</span>
             <span>Page 4 of {totalReportPages}</span>
           </div>
         </div>
@@ -748,7 +749,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </div>
 
             <div className="border-t border-amber-400 pt-2 text-[10px] text-slate-500 flex justify-between">
-              <span>ARRL Field Day Operations Summary • GOTA Report • Created by Alex Sweeney - KE8VXG (fdstats.ke8vxg.radio)</span>
+              <span>ARRL Field Day Operations Summary • GOTA Report • Created with {APP_NAME} (fdstats.ke8vxg.radio)</span>
               <span>Page 5 of 5</span>
             </div>
           </div>

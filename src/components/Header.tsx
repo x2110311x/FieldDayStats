@@ -1,5 +1,6 @@
 import React from 'react';
 import { Radio, ShieldCheck, Download, RefreshCw, HelpCircle } from 'lucide-react';
+import { APP_NAME } from '../constants';
 
 interface HeaderProps {
   onLoadSamples: () => void;
@@ -33,13 +34,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-              ARRL Field Day Operations Report
+              {APP_NAME}
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
                 2026 Edition
               </span>
             </h1>
             <p className="text-xs text-slate-400">
-              Field Day Log Analyzer & Report Generator
+              Field Day Log Analyzer & PDF Report Generator
             </p>
           </div>
         </div>

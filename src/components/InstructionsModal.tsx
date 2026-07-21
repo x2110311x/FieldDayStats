@@ -92,7 +92,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               <div className="p-4 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-200 flex gap-3">
                 <Info className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-sm text-sky-300 mb-1">Welcome to ARRL Field Day Operations & Stats Report Generator</h4>
+                  <h4 className="font-semibold text-sm text-sky-300 mb-1">Welcome to Field Day Analytics</h4>
                   <p>
                     This application analyzes your amateur radio station's Standard ADIF log files, calculates estimated ARRL Field Day contest scores, displays operational analytics, and generates print-ready summary reports.
                   </p>
