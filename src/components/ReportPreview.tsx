@@ -62,8 +62,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   const powerCategoryLabel = config.powerCategory === 'HIGH_500W'
     ? 'High Power (>100W, 1X Mult)'
     : config.powerCategory === 'QRP_5W'
-    ? 'QRP (5W, 5X Mult)'
-    : 'Low Power (100W, 2X Mult)';
+      ? 'QRP (5W, 5X Mult)'
+      : 'Low Power (100W, 2X Mult)';
 
   // Total Bonus Points (All bonuses including GOTA per-QSO bonus)
   const arrlTotalBonusPoints = score.totalBonusPoints + score.gotaQsoBonusPoints;
@@ -156,7 +156,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
       {/* A4 Report Printable Document Container */}
       <div id={elementId} className="space-y-8 bg-slate-950 print:bg-transparent p-2 sm:p-6 rounded-xl print:p-0 print:rounded-none">
-        
+
         {/* ================= PAGE 1: ARRL-Style Executive Summary & Matrix ================= */}
         <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
           <div className="space-y-3.5">
@@ -193,6 +193,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 <div className="text-[8.5px] font-bold text-slate-500 uppercase">Preliminary Total Score</div>
                 <div className="text-base font-black text-slate-950 font-mono">
                   {score.totalScore.toLocaleString()}
+                  <span className="text-[9px] font-normal text-slate-600 block mt-0.5">({score.multipliedQsoPoints.toLocaleString()} QSO + {arrlTotalBonusPoints.toLocaleString()} Bonus)</span>
                 </div>
               </div>
               <div className="bg-slate-100 border border-slate-300 rounded p-1.5">
@@ -211,7 +212,10 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               </div>
               <div className="bg-slate-100 border border-slate-300 rounded p-1.5">
                 <div className="text-[8.5px] font-bold text-slate-500 uppercase">Sections Contacted</div>
-                <div className="text-base font-black text-slate-900 font-mono">{sweep.workedCount}/86</div>
+                <div className="text-base font-black text-slate-900 font-mono">
+                  {sweep.workedCount}/86
+                  <span className="text-[9px] font-normal text-slate-600 block mt-0.5">({sweep.sweepPct}% of sections)</span>
+                </div>
               </div>
             </div>
 
@@ -518,11 +522,10 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                 return (
                   <div
                     key={sec.code}
-                    className={`py-0.5 px-1 rounded border flex items-center justify-between transition ${
-                      isWorked
+                    className={`py-0.5 px-1 rounded border flex items-center justify-between transition ${isWorked
                         ? 'bg-emerald-100 border-emerald-400 font-bold text-emerald-950'
                         : 'bg-slate-50 border-slate-200 text-slate-400'
-                    }`}
+                      }`}
                   >
                     <span className="font-bold text-[8.5px]">{sec.code}</span>
                     <span className="text-[7.5px] font-mono leading-none">
@@ -788,9 +791,9 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   <div className="flex items-center gap-3 pt-0.5">
                     <div className="w-14 h-14 rounded-full shrink-0 shadow-sm border border-slate-200" style={{ background: gotaModeConicGradient }} />
                     <div className="space-y-0.5 text-[9.5px] w-full">
-                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500"/>Phone (SSB)</span><strong>{score.gotaPhoneQsos} ({gotaPhonePct}%)</strong></div>
-                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500"/>CW</span><strong>{score.gotaCwQsos} ({gotaCwPct}%)</strong></div>
-                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500"/>Digital</span><strong>{score.gotaDigitalQsos} ({gotaDigitalPct}%)</strong></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Phone (SSB)</span><strong>{score.gotaPhoneQsos} ({gotaPhonePct}%)</strong></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" />CW</span><strong>{score.gotaCwQsos} ({gotaCwPct}%)</strong></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" />Digital</span><strong>{score.gotaDigitalQsos} ({gotaDigitalPct}%)</strong></div>
                     </div>
                   </div>
                 </div>
