@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FieldDayConfig } from '../types';
-import { Award, ChevronDown, ChevronUp, Users, Zap, ExternalLink, Search, Loader2 } from 'lucide-react';
+import { Award, Users, Zap, ExternalLink, Search, Loader2 } from 'lucide-react';
 import { lookupCallsign } from '../services/geo/callsignLookup';
 import { formatGridInput, isValidGrid } from '../services/geo/maidenhead';
 import { formatSectionInput, isValidSection } from '../services/geo/arrlSections';
@@ -18,7 +18,6 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
   uniqueOpCount,
   participationIndexPct,
 }) => {
-  const [showBonuses, setShowBonuses] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
   const updateConfig = (field: keyof FieldDayConfig, value: any) => {
@@ -303,24 +302,18 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
         </div>
       </div>
 
-      {/* Collapsible Class-Filtered Bonus Points Checklist */}
+      {/* Class-Filtered Bonus Points Checklist */}
       <div className="border border-slate-800 rounded-lg overflow-hidden">
-        <button
-          onClick={() => setShowBonuses(!showBonuses)}
-          className="w-full bg-slate-950/80 hover:bg-slate-950 px-4 py-3 flex items-center justify-between text-sm font-semibold text-slate-200 transition"
-        >
+        <div className="bg-slate-950/80 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-400" />
-            Bonus Points Checklist for Class {combinedClassCode}
+            <h3 className="text-sm font-semibold text-slate-200">
+              Bonus Points Checklist for Class {combinedClassCode}
+            </h3>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-amber-400 font-semibold">Click to toggle bonus options</span>
-            {showBonuses ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
-        </button>
+        </div>
 
-        {showBonuses && (
-          <div className="p-4 bg-slate-950/30 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 border-t border-slate-800">
+        <div className="p-4 bg-slate-950/30 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* 1. Emergency Power (Classes A, B, C, E, F - NOT D) */}
             {baseClassLetter !== 'D' && (
               <label className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
@@ -597,8 +590,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
               </label>
             )}
           </div>
-        )}
+        </div>
       </div>
-    </div>
-  );
+    );
 };
