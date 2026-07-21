@@ -94,6 +94,28 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   });
   const bandConicGradient = activeBands.length > 0 ? `conic-gradient(${bandStops.join(', ')})` : `conic-gradient(#38bdf8 0% 100%)`;
 
+  // GOTA Mode breakdown for pie charts
+  const gotaTotalQsos = gotaQsos.length || 1;
+  const gotaPhonePct = parseFloat(((score.gotaPhoneQsos / gotaTotalQsos) * 100).toFixed(1));
+  const gotaCwPct = parseFloat(((score.gotaCwQsos / gotaTotalQsos) * 100).toFixed(1));
+  const gotaDigitalPct = parseFloat(((score.gotaDigitalQsos / gotaTotalQsos) * 100).toFixed(1));
+
+  const gotaPhoneEnd = gotaPhonePct;
+  const gotaCwEnd = gotaPhoneEnd + gotaCwPct;
+  const gotaModeConicGradient = `conic-gradient(#22c55e 0% ${gotaPhoneEnd}%, #3b82f6 ${gotaPhoneEnd}% ${gotaCwEnd}%, #eab308 ${gotaCwEnd}% 100%)`;
+
+  // GOTA Band Pie Gradient
+  const gotaActiveBands = BANDS_ORDER.filter((b) => (gotaMatrix[b]?.total || 0) > 0);
+  let gotaBandAccumulator = 0;
+  const gotaBandStops = gotaActiveBands.map((band, idx) => {
+    const pct = ((gotaMatrix[band]?.total || 0) / gotaTotalQsos) * 100;
+    const start = gotaBandAccumulator;
+    gotaBandAccumulator += pct;
+    const color = BAND_PIE_COLORS[idx % BAND_PIE_COLORS.length];
+    return `${color} ${start.toFixed(1)}% ${gotaBandAccumulator.toFixed(1)}%`;
+  });
+  const gotaBandConicGradient = gotaActiveBands.length > 0 ? `conic-gradient(${gotaBandStops.join(', ')})` : `conic-gradient(#38bdf8 0% 100%)`;
+
   // Empty state when no log file is uploaded yet
   if (!hasMainQsos && !hasGotaQsos) {
     return (
@@ -600,21 +622,21 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                     <thead className="bg-slate-100 text-slate-700 uppercase border-b border-slate-300">
                       <tr>
                         <th className="p-1 font-bold text-slate-900 w-[110px]">Operator Call</th>
-                        <th className="p-1 text-right font-bold text-slate-900 w-[45px]">QSOs</th>
-                        <th className="p-1 text-right text-slate-700 w-[65px]">Active Hours</th>
-                        <th className="p-1 text-right text-slate-700 w-[55px] pr-3">% Share</th>
-                        <th className="p-1 text-left text-slate-700 pl-2">Bands Worked</th>
-                        <th className="p-1 text-left text-slate-700 w-[140px]">Modes Used</th>
+                        <th className="p-1 text-right font-bold text-slate-900 w-[55px] pr-2">QSOs</th>
+                        <th className="p-1 text-right text-slate-700 w-[80px] whitespace-nowrap pr-3">Active Hours</th>
+                        <th className="p-1 text-right text-slate-700 w-[65px] whitespace-nowrap pr-4">% Share</th>
+                        <th className="p-1 text-left text-slate-700 pl-3">Bands Worked</th>
+                        <th className="p-1 text-left text-slate-700 w-[130px] pl-2">Modes Used</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                       {operatorStats.slice(0, 10).map((op) => (
                         <tr key={op.callsign} className="hover:bg-slate-50">
                           <td className="p-1 font-bold text-sky-800 whitespace-nowrap">{op.callsign}</td>
-                          <td className="p-1 text-right font-bold text-slate-900">{op.totalQsos}</td>
-                          <td className="p-1 text-right text-slate-600">{op.activeHours} hrs</td>
-                          <td className="p-1 text-right text-slate-600 pr-3">{op.pctOfTotal}%</td>
-                          <td className="p-1 text-left pl-2">
+                          <td className="p-1 text-right font-bold text-slate-900 pr-2">{op.totalQsos}</td>
+                          <td className="p-1 text-right text-slate-600 pr-3">{op.activeHours} hrs</td>
+                          <td className="p-1 text-right text-slate-600 pr-4 font-semibold">{op.pctOfTotal}%</td>
+                          <td className="p-1 text-left pl-3">
                             <div className="flex flex-wrap gap-0.5 items-center leading-none">
                               {op.workedBands.map((b) => {
                                 const bCount = op.bandCounts ? op.bandCounts[b] : undefined;
@@ -720,29 +742,76 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                   <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none mt-1">
                     Get On The Air (GOTA) Station Report
                   </h2>
-                  <p className="text-xs text-slate-600 mt-1 font-mono">
-                    Dedicated station for novice, technician, and newly licensed operators
-                  </p>
+                  <div className="flex items-center gap-3 text-xs font-semibold text-slate-700 mt-2 font-mono">
+                    <span>GOTA Call: <strong className="text-amber-900 font-bold">{config.gotaCall || clubCall + '/GOTA'}</strong></span>
+                    <span>•</span>
+                    <span>Host Club: <strong className="text-slate-950">{clubCall}</strong></span>
+                    <span>•</span>
+                    <span>GOTA Coach: <strong className={config.bonuses.gotaCoach ? "text-emerald-700 font-bold" : "text-slate-500"}>{config.bonuses.gotaCoach ? "CLAIMED (+100 pts)" : "Not Claimed"}</strong></span>
+                  </div>
                 </div>
                 <div className="text-right font-mono">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase">GOTA Bonus Earned</div>
-                  <div className="text-base font-black text-amber-700">+{score.gotaQsoBonusPoints} pts</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase">GOTA Total Score</div>
+                  <div className="text-lg font-black text-amber-700">+{score.gotaTotalPoints.toLocaleString()} pts</div>
                 </div>
               </div>
 
-              {/* GOTA Summary Banner */}
-              <div className="bg-amber-50 border border-amber-300 rounded p-3 grid grid-cols-3 gap-3 text-center">
+              {/* GOTA Summary Grid */}
+              <div className="bg-amber-50 border border-amber-300 rounded p-2.5 grid grid-cols-5 gap-2 text-center font-mono">
                 <div>
-                  <div className="text-[9px] font-bold text-amber-900 uppercase">GOTA Total Contacts</div>
-                  <div className="text-base font-black text-slate-900 font-mono">{gotaQsos.length} QSOs</div>
+                  <div className="text-[8.5px] font-bold text-amber-900 uppercase">GOTA Contacts</div>
+                  <div className="text-sm font-black text-slate-900">{score.gotaTotalQsos} QSOs</div>
                 </div>
                 <div>
-                  <div className="text-[9px] font-bold text-amber-900 uppercase">GOTA Bonus Score</div>
-                  <div className="text-base font-black text-amber-700 font-mono">+{score.gotaQsoBonusPoints} pts</div>
+                  <div className="text-[8.5px] font-bold text-amber-900 uppercase">GOTA Operators</div>
+                  <div className="text-sm font-black text-amber-950">{gotaOperators.length} Ops</div>
                 </div>
                 <div>
-                  <div className="text-[9px] font-bold text-amber-900 uppercase">GOTA Sections</div>
-                  <div className="text-base font-black text-slate-900 font-mono">{gotaSweep.workedCount}/86</div>
+                  <div className="text-[8.5px] font-bold text-amber-900 uppercase">QSO Credit ({mult}X)</div>
+                  <div className="text-sm font-black text-sky-800">+{score.gotaMultipliedQsoPoints.toLocaleString()} pts</div>
+                </div>
+                <div>
+                  <div className="text-[8.5px] font-bold text-amber-900 uppercase">Per-QSO Bonus (5 pt)</div>
+                  <div className="text-sm font-black text-amber-800">+{score.gotaQsoBonusPoints.toLocaleString()} pts</div>
+                </div>
+                <div>
+                  <div className="text-[8.5px] font-bold text-amber-900 uppercase">GOTA Coach Bonus</div>
+                  <div className="text-sm font-black text-emerald-800">{config.bonuses.gotaCoach ? '+100 pts' : '0 pts'}</div>
+                </div>
+              </div>
+
+              {/* GOTA Visual Distribution Pie Charts */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Mode Distribution Pie Chart */}
+                <div className="border border-slate-300 rounded p-2.5 space-y-1.5 font-mono text-xs">
+                  <h3 className="text-[10px] font-bold text-slate-900 uppercase">GOTA Operating Mode Distribution</h3>
+                  <div className="flex items-center gap-3 pt-0.5">
+                    <div className="w-14 h-14 rounded-full shrink-0 shadow-sm border border-slate-200" style={{ background: gotaModeConicGradient }} />
+                    <div className="space-y-0.5 text-[9.5px] w-full">
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500"/>Phone (SSB)</span><strong>{score.gotaPhoneQsos} ({gotaPhonePct}%)</strong></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500"/>CW</span><strong>{score.gotaCwQsos} ({gotaCwPct}%)</strong></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500"/>Digital</span><strong>{score.gotaDigitalQsos} ({gotaDigitalPct}%)</strong></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Band Distribution Pie Chart */}
+                <div className="border border-slate-300 rounded p-2.5 space-y-1.5 font-mono text-xs">
+                  <h3 className="text-[10px] font-bold text-slate-900 uppercase">GOTA Band Distribution</h3>
+                  <div className="flex items-center gap-3 pt-0.5">
+                    <div className="w-14 h-14 rounded-full shrink-0 shadow-sm border border-slate-200" style={{ background: gotaBandConicGradient }} />
+                    <div className="space-y-0.5 text-[9.5px] w-full max-h-[60px] overflow-y-auto">
+                      {gotaActiveBands.map((b, idx) => (
+                        <div key={b} className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: BAND_PIE_COLORS[idx % BAND_PIE_COLORS.length] }} />
+                            {b}
+                          </span>
+                          <strong>{gotaMatrix[b].total} ({(((gotaMatrix[b].total / gotaTotalQsos) * 100)).toFixed(1)}%)</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -779,30 +848,66 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               </div>
 
               {/* GOTA Operator Leaderboard */}
-              <div className="border border-slate-300 rounded p-3 space-y-2">
-                <h3 className="text-xs font-bold text-slate-900 uppercase">GOTA Operating Participants & Mentors</h3>
-                <table className="w-full text-left text-xs font-mono">
-                  <thead className="bg-slate-100 text-slate-700 uppercase text-[10px]">
-                    <tr>
-                      <th className="p-1.5">Operator Callsign</th>
-                      <th className="p-1.5 text-right">QSOs</th>
-                      <th className="p-1.5 text-right">Active Hours</th>
-                      <th className="p-1.5 text-right">Top Band</th>
-                      <th className="p-1.5 text-right">% Share</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 text-[11px]">
-                    {gotaOperators.map((op) => (
-                      <tr key={op.callsign}>
-                        <td className="p-1.5 font-bold text-amber-800">{op.callsign}</td>
-                        <td className="p-1.5 text-right font-bold text-slate-900">{op.totalQsos}</td>
-                        <td className="p-1.5 text-right text-slate-600">{op.activeHours} hrs</td>
-                        <td className="p-1.5 text-right text-sky-800">{op.topBand}</td>
-                        <td className="p-1.5 text-right text-slate-600">{op.pctOfTotal}%</td>
+              <div className="border border-slate-300 rounded p-2.5 space-y-1">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase">GOTA Operating Participants & Mentors</h3>
+                  <span className="text-[10px] font-mono text-amber-900 font-bold">{gotaOperators.length} Operators Total</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[9.5px] font-mono border-collapse">
+                    <thead className="bg-slate-100 text-slate-700 uppercase border-b border-slate-300">
+                      <tr>
+                        <th className="p-1 font-bold text-slate-900 w-[110px]">Operator Call</th>
+                        <th className="p-1 text-right font-bold text-slate-900 w-[55px] pr-2">QSOs</th>
+                        <th className="p-1 text-right text-slate-700 w-[80px] whitespace-nowrap pr-3">Active Hours</th>
+                        <th className="p-1 text-right text-slate-700 w-[65px] whitespace-nowrap pr-4">% Share</th>
+                        <th className="p-1 text-left text-slate-700 pl-3">Bands Worked</th>
+                        <th className="p-1 text-left text-slate-700 w-[130px] pl-2">Modes Used</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {gotaOperators.map((op) => (
+                        <tr key={op.callsign} className="hover:bg-slate-50">
+                          <td className="p-1 font-bold text-amber-800 whitespace-nowrap">{op.callsign}</td>
+                          <td className="p-1 text-right font-bold text-slate-900 pr-2">{op.totalQsos}</td>
+                          <td className="p-1 text-right text-slate-600 pr-3">{op.activeHours} hrs</td>
+                          <td className="p-1 text-right text-slate-600 pr-4 font-semibold">{op.pctOfTotal}%</td>
+                          <td className="p-1 text-left pl-3">
+                            <div className="flex flex-wrap gap-0.5 items-center leading-none">
+                              {op.workedBands.map((b) => {
+                                const bCount = op.bandCounts ? op.bandCounts[b] : undefined;
+                                return (
+                                  <span key={b} className="px-1 py-0.5 text-[8px] font-bold rounded bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                                    {b}{bCount !== undefined ? ` (${bCount})` : ''}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </td>
+                          <td className="p-1 text-left">
+                            <div className="flex flex-wrap gap-0.5 items-center leading-none">
+                              {op.cwQsos > 0 && (
+                                <span className="px-1 py-0.5 text-[7.5px] font-bold rounded bg-blue-100 text-blue-900 border border-blue-300 whitespace-nowrap">
+                                  CW ({op.cwQsos})
+                                </span>
+                              )}
+                              {op.phoneQsos > 0 && (
+                                <span className="px-1 py-0.5 text-[7.5px] font-bold rounded bg-emerald-100 text-emerald-900 border border-emerald-300 whitespace-nowrap">
+                                  SSB ({op.phoneQsos})
+                                </span>
+                              )}
+                              {op.digitalQsos > 0 && (
+                                <span className="px-1 py-0.5 text-[7.5px] font-bold rounded bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                                  DIG ({op.digitalQsos})
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
