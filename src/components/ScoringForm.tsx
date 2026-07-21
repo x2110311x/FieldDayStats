@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { FieldDayConfig } from '../types';
-import { Award, ChevronDown, ChevronUp, Users, Zap, ExternalLink, Search, Loader2 } from 'lucide-react';
+import { Award, Users, Zap, ExternalLink, Search, Loader2 } from 'lucide-react';
 import { lookupCallsign } from '../services/geo/callsignLookup';
+import { formatGridInput, isValidGrid } from '../services/geo/maidenhead';
+import { formatSectionInput, isValidSection } from '../services/geo/arrlSections';
 
 interface ScoringFormProps {
   config: FieldDayConfig;
@@ -16,7 +18,6 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
   uniqueOpCount,
   participationIndexPct,
 }) => {
-  const [showBonuses, setShowBonuses] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
   const updateConfig = (field: keyof FieldDayConfig, value: any) => {
@@ -77,15 +78,22 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
       {/* Main Settings Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Station Callsign</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
+            Station Callsign <span className="text-rose-400 font-bold">*</span>
+          </label>
           <div className="relative flex items-center">
             <input
               type="text"
+              required
               value={config.clubCall}
               onChange={(e) => updateConfig('clubCall', e.target.value.toUpperCase())}
               onBlur={(e) => handleCallsignLookup(e.target.value)}
               placeholder="e.g. W1AW"
-              className="w-full bg-slate-950 border border-slate-800 rounded-md pl-3 pr-8 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-sky-500"
+              className={`w-full bg-slate-950 border rounded-md pl-3 pr-8 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none ${
+                !config.clubCall?.trim()
+                  ? 'border-amber-500/60 focus:border-amber-500'
+                  : 'border-slate-800 focus:border-sky-500'
+              }`}
             />
             <button
               type="button"
@@ -96,23 +104,43 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
               {isSearching ? <Loader2 className="w-4 h-4 animate-spin text-sky-400" /> : <Search className="w-4 h-4" />}
             </button>
           </div>
+          {!config.clubCall?.trim() && (
+            <span className="text-[10px] text-amber-400/90 mt-1 block font-medium">
+              Required for Field Day entry
+            </span>
+          )}
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Club / Group Name</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
+            Club / Group Name <span className="text-rose-400 font-bold">*</span>
+          </label>
           <input
             type="text"
+            required
             value={config.clubName}
             onChange={(e) => updateConfig('clubName', e.target.value)}
             placeholder="e.g. ARRL HQ"
-            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500"
+            className={`w-full bg-slate-950 border rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none ${
+              !config.clubName?.trim()
+                ? 'border-amber-500/60 focus:border-amber-500'
+                : 'border-slate-800 focus:border-sky-500'
+            }`}
           />
+          {!config.clubName?.trim() && (
+            <span className="text-[10px] text-amber-400/90 mt-1 block font-medium">
+              Required for Field Day entry
+            </span>
+          )}
         </div>
 
         {/* Entry Class Category Dropdown */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Entry Category</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
+            Entry Category <span className="text-rose-400 font-bold">*</span>
+          </label>
           <select
+            required
             value={baseClassLetter}
             onChange={(e) => updateConfig('entryClass', e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-amber-400 focus:outline-none focus:border-amber-500"
@@ -128,9 +156,12 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
 
         {/* Transmitter Count Input */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Simultaneous Transmitters</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
+            Simultaneous Transmitters <span className="text-rose-400 font-bold">*</span>
+          </label>
           <input
             type="number"
+            required
             min={1}
             max={20}
             value={config.transmitters || ''}
@@ -141,8 +172,11 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Power Output Level</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
+            Power Output Level <span className="text-rose-400 font-bold">*</span>
+          </label>
           <select
+            required
             value={config.powerCategory}
             onChange={(e) => updateConfig('powerCategory', e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500"
@@ -154,8 +188,11 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Power Source</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
+            Power Source <span className="text-rose-400 font-bold">*</span>
+          </label>
           <select
+            required
             value={config.powerSource}
             onChange={(e) => updateConfig('powerSource', e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500"
@@ -166,25 +203,51 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Home Grid Locator</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
+            Home Grid Locator <span className="text-rose-400 font-bold">*</span>
+          </label>
           <input
             type="text"
-            value={config.homeGrid}
-            onChange={(e) => updateConfig('homeGrid', e.target.value.toUpperCase())}
+            required
+            maxLength={4}
+            value={config.homeGrid || ''}
+            onChange={(e) => updateConfig('homeGrid', formatGridInput(e.target.value))}
             placeholder="e.g. FN31"
-            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none focus:border-sky-500"
+            className={`w-full bg-slate-950 border rounded-md px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none ${
+              !isValidGrid(config.homeGrid)
+                ? 'border-rose-500/80 focus:border-rose-500'
+                : 'border-slate-800 focus:border-sky-500'
+            }`}
           />
+          {!isValidGrid(config.homeGrid) && (
+            <span className="text-[10px] text-rose-400 mt-1 block font-medium">
+              Required XX## format (e.g. FN31)
+            </span>
+          )}
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Home ARRL Section</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">
+            Home ARRL Section <span className="text-rose-400 font-bold">*</span>
+          </label>
           <input
             type="text"
-            value={config.homeSection}
-            onChange={(e) => updateConfig('homeSection', e.target.value.toUpperCase())}
+            required
+            maxLength={4}
+            value={config.homeSection || ''}
+            onChange={(e) => updateConfig('homeSection', formatSectionInput(e.target.value))}
             placeholder="e.g. CT"
-            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-sky-500"
+            className={`w-full bg-slate-950 border rounded-md px-3 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none ${
+              !isValidSection(config.homeSection)
+                ? 'border-rose-500/80 focus:border-rose-500'
+                : 'border-slate-800 focus:border-sky-500'
+            }`}
           />
+          {!isValidSection(config.homeSection) && (
+            <span className="text-[10px] text-rose-400 mt-1 block font-medium">
+              Required valid section (e.g. CT, MDC, DX)
+            </span>
+          )}
         </div>
       </div>
 
@@ -204,15 +267,27 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
 
         <div className="flex items-center gap-4 w-full md:w-auto">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">On-Site Attendees</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1">
+              On-Site Attendees <span className="text-rose-400 font-bold">*</span>
+            </label>
             <input
               type="number"
-              min={0}
+              required
+              min={1}
               value={config.totalParticipants || ''}
               onChange={(e) => updateConfig('totalParticipants', parseInt(e.target.value, 10) || 0)}
               placeholder="e.g. 25"
-              className="w-28 bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1 text-sm font-semibold text-emerald-400 focus:outline-none focus:border-emerald-500"
+              className={`w-28 bg-slate-900 border rounded-md px-2.5 py-1 text-sm font-semibold text-emerald-400 focus:outline-none ${
+                !config.totalParticipants || config.totalParticipants < 1
+                  ? 'border-amber-500/60 focus:border-amber-500'
+                  : 'border-slate-700 focus:border-emerald-500'
+              }`}
             />
+            {(!config.totalParticipants || config.totalParticipants < 1) && (
+              <span className="text-[10px] text-amber-400/90 mt-1 block font-medium">
+                Required
+              </span>
+            )}
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-md px-3 py-1.5 text-center">
@@ -227,24 +302,18 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
         </div>
       </div>
 
-      {/* Collapsible Class-Filtered Bonus Points Checklist */}
+      {/* Class-Filtered Bonus Points Checklist */}
       <div className="border border-slate-800 rounded-lg overflow-hidden">
-        <button
-          onClick={() => setShowBonuses(!showBonuses)}
-          className="w-full bg-slate-950/80 hover:bg-slate-950 px-4 py-3 flex items-center justify-between text-sm font-semibold text-slate-200 transition"
-        >
+        <div className="bg-slate-950/80 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-400" />
-            Bonus Points Checklist for Class {combinedClassCode}
+            <h3 className="text-sm font-semibold text-slate-200">
+              Bonus Points Checklist for Class {combinedClassCode}
+            </h3>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-amber-400 font-semibold">Click to toggle bonus options</span>
-            {showBonuses ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
-        </button>
+        </div>
 
-        {showBonuses && (
-          <div className="p-4 bg-slate-950/30 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 border-t border-slate-800">
+        <div className="p-4 bg-slate-950/30 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* 1. Emergency Power (Classes A, B, C, E, F - NOT D) */}
             {baseClassLetter !== 'D' && (
               <label className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
@@ -521,8 +590,7 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
               </label>
             )}
           </div>
-        )}
+        </div>
       </div>
-    </div>
-  );
+    );
 };

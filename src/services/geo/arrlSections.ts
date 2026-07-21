@@ -115,3 +115,18 @@ export const OFFICIAL_ARRL_SECTIONS: ArrlSection[] = [
 export const ARRL_SECTION_MAP = new Map<string, ArrlSection>(
   OFFICIAL_ARRL_SECTIONS.map((sec) => [sec.code.toUpperCase(), sec])
 );
+
+/**
+ * Validates if a string is a valid ARRL / RAC / DX Section code (e.g. CT, MDC, EMA, DX).
+ */
+export function isValidSection(section?: string): boolean {
+  if (!section || typeof section !== 'string') return false;
+  return ARRL_SECTION_MAP.has(section.trim().toUpperCase());
+}
+
+/**
+ * Formats user section input: uppercase letters only, max length 4.
+ */
+export function formatSectionInput(input: string): string {
+  return input.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+}

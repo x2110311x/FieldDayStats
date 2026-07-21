@@ -1,10 +1,12 @@
 import React from 'react';
-import { Radio, ShieldCheck, Download, RefreshCw } from 'lucide-react';
+import { Radio, ShieldCheck, Download, RefreshCw, HelpCircle } from 'lucide-react';
+import { APP_NAME } from '../constants';
 
 interface HeaderProps {
   onLoadSamples: () => void;
   onReset: () => void;
   onOpenDiagnostics: () => void;
+  onOpenInstructions: () => void;
   onExportPdf: () => void;
   hasQsos: boolean;
   hasGotaQsos: boolean;
@@ -14,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLoadSamples,
   onReset,
   onOpenDiagnostics,
+  onOpenInstructions,
   onExportPdf,
   hasQsos,
   hasGotaQsos,
@@ -31,19 +34,28 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-              ARRL Field Day Operations Report
+              {APP_NAME}
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
                 2026 Edition
               </span>
             </h1>
             <p className="text-xs text-slate-400">
-              Field Day Log Analyzer & Report Generator
+              Field Day Log Analyzer & PDF Report Generator
             </p>
           </div>
         </div>
 
         {/* Action Controls */}
         <div className="flex items-center flex-wrap gap-2">
+          <button
+            onClick={onOpenInstructions}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+            title="Open application guide and instructions"
+          >
+            <HelpCircle className="w-4 h-4 text-sky-400" />
+            Instructions
+          </button>
+
           {isDevMode && (
             <>
               <button

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface FileUploaderProps {
   onMainLogLoaded: (content: string, filename: string) => void;
@@ -133,9 +133,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             </div>
             <h3 className="text-sm font-bold text-slate-100">Drop Optional GOTA ADIF Log</h3>
             <p className="text-xs text-slate-400">
-              Upload separate Get On The Air station <code className="text-amber-300 bg-slate-950 px-1 py-0.5 rounded">.adi</code> log
+              Upload separate Get On The Air station <code className="text-amber-300 bg-slate-950 px-1 py-0.5 rounded">.adi</code> or <code className="text-amber-300 bg-slate-950 px-1 py-0.5 rounded">.adif</code> file
             </p>
-            <span className="inline-block text-[11px] text-slate-400">Generates standalone GOTA analytics</span>
+            <span className="inline-block text-[11px] text-slate-400">Includes GOTA section in report</span>
           </div>
         )}
       </div>
@@ -146,6 +146,14 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           {errorMsg}
         </div>
       )}
+
+      {/* On-device processing & privacy assurance notice */}
+      <div className="md:col-span-2 flex items-center justify-center gap-2 text-xs text-slate-400 bg-slate-900/40 border border-slate-800/60 rounded-lg py-2 px-4 text-center">
+        <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+        <span>
+          <strong className="text-slate-200">100% On-Device & Private:</strong> All log processing and report generation happen locally in your browser. No ADIF files, logs, or operational statistics are ever uploaded or stored on any server.
+        </span>
+      </div>
     </div>
   );
 };

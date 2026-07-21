@@ -1,14 +1,18 @@
 import { FieldDayConfig } from './types';
 import { SAMPLE_MAIN_ADIF, SAMPLE_GOTA_ADIF } from './services/parser/sampleLogs';
 
+// Application Metadata
+export const APP_NAME = 'Field Day Analytics';
+export const APP_VERSION = '1.0.1';
+
 // Default configuration used when the app starts or resets
 export const DEFAULT_CONFIG: FieldDayConfig = {
   clubCall: '',
   clubName: '',
   entryClass: 'A',
   transmitters: 1,
-  powerCategory: 'QRP_5W',
-  powerSource: 'BATTERY_SOLAR',
+  powerCategory: 'LOW_100W',
+  powerSource: 'GENERATOR_MAINS',
   homeGrid: '',
   homeSection: '',
   totalParticipants: 0,
