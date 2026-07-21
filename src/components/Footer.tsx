@@ -2,6 +2,38 @@ import React from 'react';
 import { Github, Globe, Mail } from 'lucide-react';
 import { APP_VERSION } from '../constants';
 
+const KofiWidgetButton: React.FC = () => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const renderKoFi = () => {
+      if (containerRef.current && (window as any).kofiwidget2) {
+        (window as any).kofiwidget2.init('Tip me on Ko-fi', '#f77f23', 'H2H338AGV');
+        containerRef.current.innerHTML = (window as any).kofiwidget2.getHTML();
+      }
+    };
+
+    if ((window as any).kofiwidget2) {
+      renderKoFi();
+    } else {
+      const scriptId = 'kofi-widget-script';
+      let script = document.getElementById(scriptId) as HTMLScriptElement;
+      if (!script) {
+        script = document.createElement('script');
+        script.id = scriptId;
+        script.src = 'https://storage.ko-fi.com/cdn/widget/Widget_2.js';
+        script.async = true;
+        script.onload = renderKoFi;
+        document.body.appendChild(script);
+      } else {
+        script.addEventListener('load', renderKoFi);
+      }
+    }
+  }, []);
+
+  return <div ref={containerRef} className="inline-flex items-center" />;
+};
+
 export const Footer: React.FC = () => {
   return (
     <footer className="w-full bg-slate-950 border-t border-slate-800/80 py-8 px-4 mt-12 text-slate-400 no-print">
@@ -69,19 +101,8 @@ export const Footer: React.FC = () => {
               <span>ke8vxg.radio</span>
             </a>
 
-            {/* Ko-fi Support Button */}
-            <a
-              href="https://ko-fi.com/alexsweeney"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block transition hover:opacity-90 hover:scale-105 active:scale-95"
-            >
-              <img
-                src="https://storage.ko-fi.com/cdn/brandasset/v2/support_me_on_kofi_red.png"
-                alt="Support me on Ko-Fi"
-                className="h-9 w-auto"
-              />
-            </a>
+            {/* Ko-fi Support Widget */}
+            <KofiWidgetButton />
           </div>
         </div>
 

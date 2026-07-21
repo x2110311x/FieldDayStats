@@ -11,6 +11,7 @@ import { LogGrid } from './components/LogGrid';
 import { ReportPreview } from './components/ReportPreview';
 import { DiagnosticsModal } from './components/DiagnosticsModal';
 import { InstructionsModal } from './components/InstructionsModal';
+import { DonationModal } from './components/DonationModal';
 import { Footer } from './components/Footer';
 import { FieldDayConfig, QSO } from './types';
 import { DEFAULT_CONFIG, SAMPLE_CONFIG, SAMPLE_MAIN_ADIF, SAMPLE_GOTA_ADIF } from './constants';
@@ -29,6 +30,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'report'>('dashboard');
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
+  const [isDonationOpen, setIsDonationOpen] = useState(false);
 
   useEffect(() => {
     const seen = getCookie('fd_instructions_seen');
@@ -36,6 +38,16 @@ export function App() {
       setIsInstructionsOpen(true);
       setCookie('fd_instructions_seen', 'true', 365);
     }
+  }, []);
+
+  useEffect(() => {
+    const handleAfterPrint = () => {
+      setIsDonationOpen(true);
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
   }, []);
 
   const handleMainLogLoaded = async (content: string, filename: string) => {
@@ -358,6 +370,12 @@ export function App() {
       <InstructionsModal
         isOpen={isInstructionsOpen}
         onClose={() => setIsInstructionsOpen(false)}
+      />
+
+      {/* Donation Modal (Triggers after printing) */}
+      <DonationModal
+        isOpen={isDonationOpen}
+        onClose={() => setIsDonationOpen(false)}
       />
     </div>
   );
