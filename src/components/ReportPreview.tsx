@@ -132,7 +132,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print:space-y-0 print:m-0 print:p-0">
       {/* Export Toolbar */}
       <div className="no-print bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-md flex items-center justify-between gap-4">
         <div>
@@ -155,7 +155,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
       </div>
 
       {/* A4 Report Printable Document Container */}
-      <div id={elementId} className="space-y-8 bg-slate-950 print:bg-transparent p-2 sm:p-6 rounded-xl print:p-0 print:rounded-none">
+      <div id={elementId} className="space-y-8 print:space-y-0 print:m-0 print:p-0 bg-slate-950 print:bg-transparent p-2 sm:p-6 rounded-xl print:p-0 print:rounded-none">
 
         {/* ================= PAGE 1: ARRL-Style Executive Summary & Matrix ================= */}
         <div className="a4-page shadow-2xl rounded-sm text-slate-900 flex flex-col justify-between">
