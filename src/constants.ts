@@ -3,7 +3,7 @@ import { SAMPLE_MAIN_ADIF, SAMPLE_GOTA_ADIF } from './services/parser/sampleLogs
 
 // Application Metadata
 export const APP_NAME = 'Field Day Analytics';
-export const APP_VERSION = '1.0.1';
+export const APP_VERSION = '1.1';
 
 // Default configuration used when the app starts or resets
 export const DEFAULT_CONFIG: FieldDayConfig = {
