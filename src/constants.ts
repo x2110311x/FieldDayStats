@@ -1,6 +1,9 @@
 import { FieldDayConfig } from './types';
 import { SAMPLE_MAIN_ADIF, SAMPLE_GOTA_ADIF } from './services/parser/sampleLogs';
 
+// Application Version
+export const APP_VERSION = '1.0.1';
+
 // Default configuration used when the app starts or resets
 export const DEFAULT_CONFIG: FieldDayConfig = {
   clubCall: '',

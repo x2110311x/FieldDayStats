@@ -1,5 +1,6 @@
 import React from 'react';
-import { Github, Globe, Coffee } from 'lucide-react';
+import { Github, Globe } from 'lucide-react';
+import { APP_VERSION } from '../constants';
 
 export const Footer: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ export const Footer: React.FC = () => {
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               Open source Field Day analytics & PDF report generator ·{' '}
+              <span className="font-mono text-slate-400 font-semibold">v{APP_VERSION}</span> ·{' '}
               <a
                 href="https://fdstats.ke8vxg.radio"
                 target="_blank"
