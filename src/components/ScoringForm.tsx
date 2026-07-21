@@ -3,6 +3,7 @@ import { FieldDayConfig } from '../types';
 import { Award, ChevronDown, ChevronUp, Users, Zap, ExternalLink, Search, Loader2 } from 'lucide-react';
 import { lookupCallsign } from '../services/geo/callsignLookup';
 import { formatGridInput, isValidGrid } from '../services/geo/maidenhead';
+import { formatSectionInput, isValidSection } from '../services/geo/arrlSections';
 
 interface ScoringFormProps {
   config: FieldDayConfig;
@@ -191,11 +192,21 @@ export const ScoringForm: React.FC<ScoringFormProps> = ({
           <label className="block text-xs font-semibold text-slate-400 mb-1">Home ARRL Section</label>
           <input
             type="text"
-            value={config.homeSection}
-            onChange={(e) => updateConfig('homeSection', e.target.value.toUpperCase())}
+            maxLength={4}
+            value={config.homeSection || ''}
+            onChange={(e) => updateConfig('homeSection', formatSectionInput(e.target.value))}
             placeholder="e.g. CT"
-            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-sky-500"
+            className={`w-full bg-slate-950 border rounded-md px-3 py-1.5 text-sm font-semibold text-slate-200 focus:outline-none ${
+              config.homeSection && !isValidSection(config.homeSection)
+                ? 'border-rose-500/80 focus:border-rose-500'
+                : 'border-slate-800 focus:border-sky-500'
+            }`}
           />
+          {config.homeSection && !isValidSection(config.homeSection) && (
+            <span className="text-[10px] text-rose-400 mt-1 block font-medium">
+              Must be a valid ARRL/RAC section (e.g. CT, MDC, EMA, DX)
+            </span>
+          )}
         </div>
       </div>
 

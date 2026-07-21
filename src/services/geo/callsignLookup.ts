@@ -1,4 +1,5 @@
 import { latLngToGrid, isValidGrid } from './maidenhead';
+import { isValidSection } from './arrlSections';
 
 export interface CallsignLookupResult {
   callsign: string;
@@ -50,7 +51,8 @@ export async function lookupCallsign(rawCall: string): Promise<CallsignLookupRes
       if (data && data.status === 'VALID') {
         let grid = data.location?.gridsquare ? data.location.gridsquare.toUpperCase() : undefined;
         const name = data.name || (data.trustee?.name ? `${data.trustee.name} Club` : undefined);
-        const state = data.address?.line2?.split(',')[1]?.trim()?.substring(0, 2)?.toUpperCase();
+        const rawState = data.address?.line2?.split(',')[1]?.trim()?.substring(0, 4)?.toUpperCase();
+        const section = rawState && isValidSection(rawState) ? rawState : undefined;
         const lat = data.location?.latitude ? parseFloat(data.location.latitude) : undefined;
         const lng = data.location?.longitude ? parseFloat(data.location.longitude) : undefined;
 
@@ -80,7 +82,7 @@ export async function lookupCallsign(rawCall: string): Promise<CallsignLookupRes
           name: name ? name.toUpperCase() : undefined,
           type: data.type,
           grid,
-          section: state,
+          section,
           lat,
           lng,
         };

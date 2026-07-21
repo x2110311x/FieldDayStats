@@ -1,10 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { lookupCallsign, lookupGridFromZip } from '../services/geo/callsignLookup';
 import { latLngToGrid, isValidGrid, formatGridInput } from '../services/geo/maidenhead';
+import { isValidSection, formatSectionInput } from '../services/geo/arrlSections';
 
 describe('maidenhead & callsignLookup service', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('validates official ARRL / RAC / DX section codes', () => {
+    expect(isValidSection('CT')).toBe(true);
+    expect(isValidSection('MDC')).toBe(true);
+    expect(isValidSection('EMA')).toBe(true);
+    expect(isValidSection('DX')).toBe(true);
+    expect(isValidSection('WPA')).toBe(true);
+    expect(isValidSection('XYZ')).toBe(false);
+    expect(isValidSection('')).toBe(false);
+    expect(isValidSection(undefined)).toBe(false);
+  });
+
+  it('formats section input properly', () => {
+    expect(formatSectionInput('ct')).toBe('CT');
+    expect(formatSectionInput('mdc123')).toBe('MDC');
+    expect(formatSectionInput('wma')).toBe('WMA');
   });
 
   it('validates 4-character XX## Maidenhead grid format', () => {
