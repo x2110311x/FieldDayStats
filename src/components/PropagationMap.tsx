@@ -78,7 +78,7 @@ export const PropagationMap: React.FC<PropagationMapProps> = ({
       .bindPopup(`<b>HOME STATION (${homeCall || 'MY SITE'})</b><br/>Grid: ${homeGrid || 'N/A'}`);
 
     // Track bounding box coordinates across all QSOs
-    const bounds = L.latLngBounds([homeCoords.lat, homeCoords.lng]);
+    const bounds = L.latLngBounds([[homeCoords.lat, homeCoords.lng]]);
 
     // Map each contact to coordinates
     const targetMap = new Map<string, { lat: number; lng: number; call: string; band: string; section: string; count: number; dist: number }>();
@@ -86,7 +86,7 @@ export const PropagationMap: React.FC<PropagationMapProps> = ({
     for (const qso of qsos) {
       const coords = resolveQsoCoordinates(qso.grid, qso.section, qso.call);
       if (coords) {
-        bounds.extend([coords.lat, coords.lng]);
+        bounds.extend(L.latLng(coords.lat, coords.lng));
 
         const key = `${coords.lat.toFixed(2)}_${coords.lng.toFixed(2)}`;
         const dist = calculateGreatCircleDistance(homeCoords.lat, homeCoords.lng, coords.lat, coords.lng);

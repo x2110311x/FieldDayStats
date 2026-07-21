@@ -177,10 +177,8 @@ export function App() {
             <FileUploader
               onMainLogLoaded={handleMainLogLoaded}
               onGotaLogLoaded={handleGotaLogLoaded}
-              hasMainLog={mainQsos.length > 0}
-              hasGotaLog={gotaQsos.length > 0}
-              mainLogCount={mainQsos.length}
-              gotaLogCount={gotaQsos.length}
+              mainQsoCount={mainQsos.length}
+              gotaQsoCount={gotaQsos.length}
             />
 
             {/* Quick KPI Overview Bar */}
@@ -361,9 +359,6 @@ export function App() {
       <DiagnosticsModal
         isOpen={isDiagnosticsOpen}
         onClose={() => setIsDiagnosticsOpen(false)}
-        mainQsos={mainQsos}
-        gotaQsos={gotaQsos}
-        config={config}
       />
 
       {/* Instructions Modal */}
