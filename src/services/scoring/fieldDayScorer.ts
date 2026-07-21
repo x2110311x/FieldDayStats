@@ -5,26 +5,46 @@ export function calculateFieldDayScore(
   gotaQsos: QSO[],
   config: FieldDayConfig
 ): ScoreBreakdown {
-  const allQsos = [...mainQsos, ...gotaQsos];
+  // 1. Main Station QSO Breakdown
+  let mainPhoneQsos = 0;
+  let mainCwQsos = 0;
+  let mainDigitalQsos = 0;
 
-  let phoneQsos = 0;
-  let cwQsos = 0;
-  let digitalQsos = 0;
-
-  for (const qso of allQsos) {
-    if (qso.mode === 'PHONE') phoneQsos++;
-    else if (qso.mode === 'CW') cwQsos++;
-    else if (qso.mode === 'DIGITAL') digitalQsos++;
+  for (const qso of mainQsos) {
+    if (qso.mode === 'PHONE') mainPhoneQsos++;
+    else if (qso.mode === 'CW') mainCwQsos++;
+    else if (qso.mode === 'DIGITAL') mainDigitalQsos++;
   }
 
-  const totalQsos = phoneQsos + cwQsos + digitalQsos;
+  const mainTotalQsos = mainPhoneQsos + mainCwQsos + mainDigitalQsos;
+  const mainRawQsoPoints = mainPhoneQsos * 1 + mainCwQsos * 2 + mainDigitalQsos * 2;
+
+  // 2. GOTA Station QSO Breakdown
+  let gotaPhoneQsos = 0;
+  let gotaCwQsos = 0;
+  let gotaDigitalQsos = 0;
+
+  for (const qso of gotaQsos) {
+    if (qso.mode === 'PHONE') gotaPhoneQsos++;
+    else if (qso.mode === 'CW') gotaCwQsos++;
+    else if (qso.mode === 'DIGITAL') gotaDigitalQsos++;
+  }
+
+  const gotaTotalQsos = gotaPhoneQsos + gotaCwQsos + gotaDigitalQsos;
+  const gotaRawQsoPoints = gotaPhoneQsos * 1 + gotaCwQsos * 2 + gotaDigitalQsos * 2;
+
+  // 3. Combined QSO Totals
+  const phoneQsos = mainPhoneQsos + gotaPhoneQsos;
+  const cwQsos = mainCwQsos + gotaCwQsos;
+  const digitalQsos = mainDigitalQsos + gotaDigitalQsos;
+  const totalQsos = mainTotalQsos + gotaTotalQsos;
 
   const phonePoints = phoneQsos * 1;
   const cwPoints = cwQsos * 2;
   const digitalPoints = digitalQsos * 2;
-  const rawQsoPoints = phonePoints + cwPoints + digitalPoints;
+  const rawQsoPoints = mainRawQsoPoints + gotaRawQsoPoints;
 
-  // Power Multiplier
+  // 4. Power Multiplier (Rule 7.2)
   let powerMultiplier = 2;
   if (config.powerCategory === 'QRP_5W') {
     powerMultiplier = config.powerSource === 'BATTERY_SOLAR' ? 5 : 2;
@@ -34,15 +54,17 @@ export function calculateFieldDayScore(
     powerMultiplier = 2; // LOW_100W
   }
 
+  const mainMultipliedQsoPoints = mainRawQsoPoints * powerMultiplier;
+  const gotaMultipliedQsoPoints = gotaRawQsoPoints * powerMultiplier;
   const multipliedQsoPoints = rawQsoPoints * powerMultiplier;
 
-  // GOTA Bonus Points (5 pts per GOTA QSO)
-  const gotaQsoCount = gotaQsos.length;
+  // 5. GOTA Station Bonus Points (Rule 7.3.13.1 - 5 pts / QSO, uncapped)
+  const gotaQsoCount = gotaTotalQsos;
   const gotaQsoBonusPoints = gotaQsoCount * 5;
+  const gotaTotalPoints = gotaMultipliedQsoPoints + gotaQsoBonusPoints;
 
-  // Itemized Bonus Points
+  // 6. Claimed Bonus Points Checklist (Excludes GOTA per-QSO bonus)
   const bonusItems: { label: string; points: number }[] = [];
-
   const b = config.bonuses;
 
   if (b.emergencyPower) {
@@ -100,10 +122,6 @@ export function calculateFieldDayScore(
     bonusItems.push({ label: `Youth Element Bonus (${youthCount} Youth)`, points: youthCount * 20 });
   }
 
-  if (gotaQsoCount > 0) {
-    bonusItems.push({ label: `GOTA Station Contact Bonus (${gotaQsoCount} QSOs x 5 pts)`, points: gotaQsoBonusPoints });
-  }
-
   if (b.gotaCoach && gotaQsoCount >= 10) {
     bonusItems.push({ label: 'GOTA Coach Bonus', points: 100 });
   }
@@ -124,10 +142,14 @@ export function calculateFieldDayScore(
     bonusItems.push({ label: 'Social Media Promotion Bonus', points: 100 });
   }
 
+  // Claimed Bonus Points total (strictly separate from GOTA QSO bonus)
   const totalBonusPoints = bonusItems.reduce((sum, item) => sum + item.points, 0);
-  const totalScore = multipliedQsoPoints + totalBonusPoints;
 
-  // Participation Index
+  // Total Score = Main Multiplied + Claimed Bonuses + GOTA Total (GOTA Multiplied + GOTA Bonus)
+  const totalScore = mainMultipliedQsoPoints + totalBonusPoints + gotaTotalPoints;
+
+  // 7. Participation Index
+  const allQsos = [...mainQsos, ...gotaQsos];
   const uniqueOperatorsSet = new Set<string>();
   for (const qso of allQsos) {
     if (qso.operator && qso.operator !== 'MAIN_OP') {
@@ -138,7 +160,7 @@ export function calculateFieldDayScore(
   const totalAttendance = Math.max(config.totalParticipants, uniqueOperators);
   const participationIndexPct = parseFloat(((uniqueOperators / totalAttendance) * 100).toFixed(1));
 
-  // Section Sweep (86 ARRL sections total)
+  // 8. Section Sweep (86 ARRL sections total)
   const uniqueSectionsSet = new Set<string>();
   for (const qso of allQsos) {
     if (qso.section && qso.section.trim() !== '') {
@@ -149,6 +171,21 @@ export function calculateFieldDayScore(
   const sweepPercentage = parseFloat(((sectionsWorked / 86) * 100).toFixed(1));
 
   return {
+    mainPhoneQsos,
+    mainCwQsos,
+    mainDigitalQsos,
+    mainTotalQsos,
+    mainRawQsoPoints,
+    mainMultipliedQsoPoints,
+    gotaPhoneQsos,
+    gotaCwQsos,
+    gotaDigitalQsos,
+    gotaTotalQsos,
+    gotaRawQsoPoints,
+    gotaMultipliedQsoPoints,
+    gotaQsoCount,
+    gotaQsoBonusPoints,
+    gotaTotalPoints,
     phoneQsos,
     cwQsos,
     digitalQsos,
@@ -159,8 +196,6 @@ export function calculateFieldDayScore(
     rawQsoPoints,
     powerMultiplier,
     multipliedQsoPoints,
-    gotaQsoCount,
-    gotaQsoBonusPoints,
     bonusPointsItemized: bonusItems,
     totalBonusPoints,
     totalScore,

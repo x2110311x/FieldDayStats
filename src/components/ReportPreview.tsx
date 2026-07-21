@@ -188,21 +188,34 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               <h3 className="text-xs font-bold text-slate-900 uppercase">ARRL Field Day Score Breakdown</h3>
               <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                 <div className="space-y-1 border-r border-slate-200 pr-3">
-                  <div className="flex justify-between"><span>Phone QSOs ({phoneCount} × 1 pt):</span> <span>{phoneCount} pts</span></div>
-                  <div className="flex justify-between"><span>CW QSOs ({cwCount} × 2 pts):</span> <span>{cwCount * 2} pts</span></div>
-                  <div className="flex justify-between"><span>Digital QSOs ({digitalCount} × 2 pts):</span> <span>{digitalCount * 2} pts</span></div>
+                  <div className="flex justify-between"><span>Phone QSOs ({score.mainPhoneQsos} × 1 pt):</span> <span>{score.mainPhoneQsos} pts</span></div>
+                  <div className="flex justify-between"><span>CW QSOs ({score.mainCwQsos} × 2 pts):</span> <span>{score.mainCwQsos * 2} pts</span></div>
+                  <div className="flex justify-between"><span>Digital QSOs ({score.mainDigitalQsos} × 2 pts):</span> <span>{score.mainDigitalQsos * 2} pts</span></div>
                   <div className="border-t border-slate-300 pt-1 flex justify-between font-bold text-slate-900">
-                    <span>Raw QSO Points:</span> <span>{rawQsoPoints} pts</span>
+                    <span>Main Raw QSO Points:</span> <span>{score.mainRawQsoPoints} pts</span>
                   </div>
                   <div className="flex justify-between font-bold text-sky-800">
-                    <span>Multiplied QSO Points ({score.powerMultiplier}x):</span> <span>{score.multipliedQsoPoints.toLocaleString()} pts</span>
+                    <span>Main Multiplied QSO Points ({score.powerMultiplier}x):</span> <span>{score.mainMultipliedQsoPoints.toLocaleString()} pts</span>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <div className="flex justify-between text-[11px]"><span>Claimed Bonus Points:</span> <strong className="text-emerald-700">+{score.totalBonusPoints} pts</strong></div>
-                  {hasGotaQsos && (
-                    <div className="flex justify-between text-[11px]"><span>GOTA Station Bonus:</span> <strong className="text-amber-700">+{score.gotaQsoBonusPoints} pts</strong></div>
+                  <div className="flex justify-between text-[11px]"><span>Claimed Bonus Points (Excl. GOTA):</span> <strong className="text-emerald-700">+{score.totalBonusPoints} pts</strong></div>
+                  {score.gotaTotalQsos > 0 && (
+                    <div className="border-t border-slate-200 pt-1 space-y-0.5">
+                      <div className="flex justify-between text-[11px] font-bold text-amber-900">
+                        <span>GOTA Station Total:</span>
+                        <span>+{score.gotaTotalPoints} pts</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] text-slate-600 pl-2">
+                        <span>• GOTA QSO Credit ({score.powerMultiplier}x):</span>
+                        <span>+{score.gotaMultipliedQsoPoints} pts</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] text-slate-600 pl-2">
+                        <span>• GOTA Bonus ({score.gotaQsoCount} × 5 pts):</span>
+                        <span>+{score.gotaQsoBonusPoints} pts</span>
+                      </div>
+                    </div>
                   )}
                   <div className="border-t-2 border-slate-900 pt-1 flex justify-between font-black text-sm text-slate-950">
                     <span>TOTAL ESTIMATED SCORE:</span> <span>{score.totalScore.toLocaleString()} pts</span>

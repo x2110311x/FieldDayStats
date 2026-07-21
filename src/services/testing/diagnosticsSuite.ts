@@ -84,20 +84,17 @@ export function runAnalyticsDiagnostics(): DiagnosticResult[] {
   };
 
   const score = calculateFieldDayScore(parsedMain, parsedGota, defaultConfig);
-  // Main: CW (4 pts) + Phone (2 pts) + Digital (2 pts) = 8 raw pts.
-  // GOTA: Phone (2 pts) = 2 raw pts.
-  // Total Raw QSO Points = 10 pts.
-  // Power Multiplier: 2x -> Multiplied QSO Points = 20 pts.
-  // GOTA Contact Bonus: 2 GOTA QSOs * 5 = 10 pts.
-  // Bonus Points: Emergency Power (200) + Media (100) + Web (50) + Safety Officer (100) + GOTA QSOs (10) = 460 pts.
-  // Total Score = 20 + 460 = 480 pts.
+  // Main: CW (4 pts) + Phone (2 pts) + Digital (2 pts) = 8 raw pts -> 16 multiplied pts.
+  // GOTA: Phone (2 pts) = 2 raw pts -> 4 multiplied pts + 10 bonus pts = 14 total GOTA pts.
+  // Claimed Bonuses: Emergency Power (200) + Media (100) + Web (50) + Safety Officer (100) = 450 pts.
+  // Total Score = 16 (Main Mult) + 450 (Claimed Bonus) + 14 (GOTA Total) = 480 pts.
 
   results.push({
     name: 'ARRL Score Calculation',
-    passed: score.totalScore === 480 && score.multipliedQsoPoints === 20,
-    expected: '480 Total Points (20 Multiplied QSO + 460 Bonus)',
-    actual: `${score.totalScore} Total Points (${score.multipliedQsoPoints} Multiplied QSO + ${score.totalBonusPoints} Bonus)`,
-    details: 'Verified QSO points (Phone=1, CW=2, Digital=2), 2x power multiplier, and itemized bonus points.',
+    passed: score.totalScore === 480 && score.mainMultipliedQsoPoints === 16 && score.totalBonusPoints === 450 && score.gotaTotalPoints === 14,
+    expected: '480 Total Points (16 Main Mult + 450 Claimed Bonus + 14 GOTA Total)',
+    actual: `${score.totalScore} Total Points (${score.mainMultipliedQsoPoints} Main Mult + ${score.totalBonusPoints} Claimed Bonus + ${score.gotaTotalPoints} GOTA Total)`,
+    details: 'Verified QSO points (Phone=1, CW=2, Digital=2), 2x power multiplier, separate claimed bonuses, and GOTA total.',
   });
 
   // Test 4: Active Operator Participation Index
