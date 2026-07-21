@@ -68,6 +68,26 @@ export interface FieldDayConfig {
 }
 
 export interface ScoreBreakdown {
+  // Main Station Breakdown
+  mainPhoneQsos: number;
+  mainCwQsos: number;
+  mainDigitalQsos: number;
+  mainTotalQsos: number;
+  mainRawQsoPoints: number;
+  mainMultipliedQsoPoints: number;
+
+  // GOTA Station Breakdown
+  gotaPhoneQsos: number;
+  gotaCwQsos: number;
+  gotaDigitalQsos: number;
+  gotaTotalQsos: number;
+  gotaRawQsoPoints: number;
+  gotaMultipliedQsoPoints: number;
+  gotaQsoCount: number;
+  gotaQsoBonusPoints: number;
+  gotaTotalPoints: number; // Combined GOTA Multiplied QSO points + GOTA bonus points
+
+  // Combined Totals
   phoneQsos: number;
   cwQsos: number;
   digitalQsos: number;
@@ -81,9 +101,6 @@ export interface ScoreBreakdown {
   powerMultiplier: number;
   multipliedQsoPoints: number;
 
-  gotaQsoCount: number;
-  gotaQsoBonusPoints: number;
-  
   bonusPointsItemized: { label: string; points: number }[];
   totalBonusPoints: number;
   

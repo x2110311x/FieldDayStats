@@ -60,30 +60,44 @@
   color: #0f172a !important;
 }
 
-/* Chrome / Browser Print CSS Rules */
+/* Chrome / Safari / Browser Print CSS Rules */
 @page {
   size: letter portrait;
   margin: 0;
-  /* Forces Chrome print dialog margins to 0 by default */
+  /* Forces print dialog margins to 0 by default */
 }
 
 @media print {
 
   html,
-  body {
+  body,
+  #root,
+  #root > div,
+  main,
+  #main-report-print-container {
+    display: block !important;
+    float: none !important;
+    flex: none !important;
     width: 8.5in !important;
+    max-width: 8.5in !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    overflow: visible !important;
   }
 
   header,
   nav,
+  footer,
   .no-print,
-  .no-print * {
+  .no-print *,
+  body > iframe,
+  body > div:not(#root),
+  [id*="kofi"],
+  [class*="kofi"] {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -91,47 +105,33 @@
     padding: 0 !important;
   }
 
-  main {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    /* Reset the space-y-6 gap so the nav tabs don't push content down */
-    gap: 0 !important;
-  }
-
-  /* Reset space-y gap on outer app wrapper and main */
-  main > * + * {
+  /* Reset space-y gap on main and report print container */
+  main > * + *,
+  #main-report-print-container > * {
     margin-top: 0 !important;
-  }
-
-  /* Hide the root flex wrapper's extra bg */
-  body > div {
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  #main-report-print-container {
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    margin-bottom: 0 !important;
   }
 
   .a4-page {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
     width: 8.5in !important;
-    height: 11in !important;
     max-width: 8.5in !important;
-    max-height: 11in !important;
-    min-height: 11in !important;
+    height: 10.7in !important;
+    max-height: 10.7in !important;
+    min-height: 10.5in !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 10mm 12mm !important;
-    margin: 0 !important;
+    padding: 8mm 10mm !important;
+    margin: 0 auto !important;
     box-sizing: border-box !important;
     page-break-after: always !important;
     break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    overflow: hidden !important;
   }
 
   .a4-page:last-child {

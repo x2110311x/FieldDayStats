@@ -89,6 +89,15 @@ export function App() {
   const handleGotaLogLoaded = (content: string, filename: string) => {
     const parsed = parseAdifLog(content, true);
     setGotaQsos(parsed);
+
+    const discoveredGotaCall = parsed.find((q) => q.station || q.operator);
+    if (discoveredGotaCall) {
+      const gCall = discoveredGotaCall.station || discoveredGotaCall.operator;
+      setConfig((prev) => ({
+        ...prev,
+        gotaCall: prev.gotaCall || gCall,
+      }));
+    }
   };
 
   const handleLoadSamples = () => {
@@ -245,13 +254,13 @@ export function App() {
 
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 shadow-md">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  GOTA Contacts
+                  GOTA Station Total
                 </span>
                 <span className="text-xl font-black text-amber-400 font-mono">
-                  {score.gotaQsoCount}
+                  +{score.gotaTotalPoints}
                 </span>
                 <span className="text-[10px] text-slate-500 block mt-0.5 font-mono">
-                  +{score.gotaQsoBonusPoints} Bonus Pts
+                  {score.gotaQsoCount} QSOs ({score.gotaMultipliedQsoPoints} Mult + {score.gotaQsoBonusPoints} Bonus)
                 </span>
               </div>
             </div>

@@ -1,7 +1,7 @@
 # 📻 Field Day Analytics
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version: 1.0.1](https://img.shields.io/badge/Version-1.0.1--beta-amber.svg)](package.json)
+[![Version: 1.1](https://img.shields.io/badge/Version-1.1--beta-amber.svg)](package.json)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646cff.svg?logo=vite&logoColor=white)](https://vitejs.dev/)

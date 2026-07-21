@@ -12,6 +12,10 @@ import {
   Info,
   ChevronRight,
   ShieldCheck,
+  Search,
+  ListFilter,
+  CheckSquare,
+  Printer,
 } from 'lucide-react';
 import { APP_NAME } from '../constants';
 
@@ -50,7 +54,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Learn how to import logs, configure scoring options, and export summary reports
+                Learn how to import logs, configure station parameters, claim bonus points, and generate submission reports
               </p>
             </div>
           </div>
@@ -73,11 +77,10 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-t-lg text-xs font-semibold whitespace-nowrap transition border-t border-x relative ${
-                  isActive
-                    ? 'bg-slate-900 border-slate-700 text-sky-400 border-b-slate-900 -mb-px z-10'
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-                }`}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-t-lg text-xs font-semibold whitespace-nowrap transition border-t border-x relative ${isActive
+                  ? 'bg-slate-900 border-slate-700 text-sky-400 border-b-slate-900 -mb-px z-10'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                  }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-sky-400' : 'text-slate-500'}`} />
                 {tab.label}
@@ -96,7 +99,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                 <div>
                   <h4 className="font-semibold text-sm text-sky-300 mb-1">Welcome to {APP_NAME}</h4>
                   <p>
-                    This application analyzes your amateur radio station's Standard ADIF log files, calculates estimated ARRL Field Day contest scores, displays operational analytics, and generates print-ready summary reports.
+                    Simply upload your log files, fill in your station setup details and bonus points, and generate print-ready Field Day summary reports.
                   </p>
                 </div>
               </div>
@@ -106,7 +109,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                 <div>
                   <h4 className="font-semibold text-sm text-emerald-300 mb-1">100% On-Device & Private</h4>
                   <p>
-                    All log parsing, analytics computations, callsign lookups, and PDF report generation occur strictly locally in your browser. No QSO data or personal information is ever uploaded to a server or saved externally.
+                    All log parsing, score calculations, callsign lookups, and PDF generation occur locally inside your web browser. No QSO logs or station data are ever uploaded to an external server or saved in cloud storage.
                   </p>
                 </div>
               </div>
@@ -120,7 +123,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                     Upload Log Files
                   </span>
                   <p className="text-slate-400 text-[11px]">
-                    Drag & drop your main station <code className="text-sky-300">.adi</code> or <code className="text-sky-300">.adif</code> file. Optionally upload a separate GOTA station log.
+                    Drag & drop your primary station <code className="text-sky-300">.adi</code> or <code className="text-sky-300">.adif</code> file. Optionally upload a separate GOTA station log.
                   </p>
                 </div>
 
@@ -130,7 +133,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                     Verify Station Setup
                   </span>
                   <p className="text-slate-400 text-[11px]">
-                    Ensure your Entry Class, Transmitter count, Club Callsign, Home Grid Square, and ARRL Section match your entry.
+                    Check your Entry Class (A-F), Transmitter count, Power Category, Club Callsign, Home Grid Square, and ARRL Section.
                   </p>
                 </div>
 
@@ -140,7 +143,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                     Select Bonus Points
                   </span>
                   <p className="text-slate-400 text-[11px]">
-                    Check off all bonus point categories completed by your group (e.g. 100% Emergency Power, Media Publicity, Safety Officer).
+                    Check off all bonus point categories completed by your group (the checklist automatically adapts to your selected Entry Class).
                   </p>
                 </div>
 
@@ -150,7 +153,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                     Print & Save Summary Report
                   </span>
                   <p className="text-slate-400 text-[11px]">
-                    Preview analytics charts, operator leaderboards, and click <strong>Download PDF Report</strong> to open your browser's print dialog to print or save as a PDF.
+                    Preview operational analytics, operator leaderboards, and click <strong>Download PDF Report</strong> to open your browser's print dialog to save as PDF.
                   </p>
                 </div>
               </div>
@@ -160,7 +163,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           {/* Tab 2: Log Import */}
           {activeTab === 'logs' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Log File Requirements & Auto-Extraction</h3>
+              <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Log File Requirements & Formatting</h3>
 
               <div className="space-y-3">
                 <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-start gap-3">
@@ -170,7 +173,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                   <div>
                     <h4 className="font-semibold text-slate-200">Main Station ADIF Log</h4>
                     <p className="text-slate-400 text-[11px] mt-0.5">
-                      Upload your primary log created by software like N1MM, Ham Radio Deluxe, WSJT-X, or AC Log. The parser automatically extracts QSO dates, bands, modes, callsigns, and sent/received exchange parameters.
+                      Upload your primary log created by software like N1MM, Ham Radio Deluxe, WSJT-X, or AC Log (<code className="text-slate-300">.adi</code> or <code className="text-slate-300">.adif</code>). The parser extracts QSO timestamps, bands, modes, callsigns, operator tags, sent/received exchange parameters, and satellite indicators.
                     </p>
                   </div>
                 </div>
@@ -182,17 +185,10 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                   <div>
                     <h4 className="font-semibold text-slate-200">Get On The Air (GOTA) Log</h4>
                     <p className="text-slate-400 text-[11px] mt-0.5">
-                      If your station ran a GOTA station, upload its separate ADIF file into the GOTA uploader box. GOTA QSOs are evaluated under standard GOTA rules and generate dedicated operator metrics.
+                      If your group ran a GOTA station, drop its separate ADIF file into the GOTA uploader box. GOTA contacts are evaluated for bonus points and used to generate dedicated GOTA pages in your summary report.
                     </p>
                   </div>
                 </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-                <span className="text-slate-200 font-semibold block">Automatic Metadata Discovery:</span>
-                <p>
-                  When you upload a main log, the app automatically inspects header fields and QSO records to infer your Station Call Sign, Entry Class, Transmitter count, Home Grid Square, and ARRL Section. You can review and adjust these in the Setup Form.
-                </p>
               </div>
             </div>
           )}
@@ -200,48 +196,67 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           {/* Tab 3: Station Setup */}
           {activeTab === 'setup' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Fields to Fill in the Setup Form</h3>
+              <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Configuring Station & Operational Setup</h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="font-semibold text-sky-400">Club / Station Call Sign</span>
+                  <span className="font-semibold text-sky-400 flex items-center gap-1">
+                    Station Call Sign
+                    <Search className="w-3 h-3 text-slate-400" />
+                  </span>
                   <p className="text-slate-400 text-[11px]">
-                    The primary callsign under which the Field Day entry is registered (e.g., <code className="text-slate-300">W1AW</code>).
+                    The official callsign under which the entry is submitted (e.g. <code className="text-slate-300">W1AW</code>). Click the search icon to auto-lookup Club Name, Grid Square, and ARRL Section from the callsign database.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                  <span className="font-semibold text-sky-400">GOTA Station Callsign</span>
+                  <p className="text-slate-400 text-[11px]">
+                    Optional callsign used by the GOTA station (e.g. <code className="text-slate-300">W1AW/GOTA</code>). Auto-detected if present in the GOTA log.
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                   <span className="font-semibold text-sky-400">Club / Group Name</span>
                   <p className="text-slate-400 text-[11px]">
-                    The full name of your radio club or operating group for printable reports.
+                    The full name of your radio club or operating group as displayed on formal submission pages.
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="font-semibold text-sky-400">Entry Class (A - F)</span>
+                  <span className="font-semibold text-sky-400">Entry Category (A - F)</span>
                   <p className="text-slate-400 text-[11px]">
-                    Select your ARRL Entry Class: <strong>A</strong> (Club/Group 3+), <strong>B</strong> (1-2 person), <strong>C</strong> (Mobile), <strong>D</strong> (Home Commercial Power), <strong>E</strong> (Home Emergency Power), or <strong>F</strong> (EOC).
+                    Select your category: <strong>A</strong> (Club 3+), <strong>B</strong> (1-2 Person), <strong>C</strong> (Mobile), <strong>D</strong> (Home Commercial Power), <strong>E</strong> (Home Emergency Power), or <strong>F</strong> (EOC).
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="font-semibold text-sky-400">Number of Transmitters</span>
+                  <span className="font-semibold text-sky-400">Simultaneous Transmitters</span>
                   <p className="text-slate-400 text-[11px]">
-                    The maximum number of transmitters simultaneously transmitting on air (e.g. 3 Transmitters + Class A = 3A).
+                    Number of transmitters on the air simultaneously (1 to 20). Combined with your category letter to form your official Class code (e.g. 3 Transmitters + Class A = <code className="text-slate-300">3A</code>).
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="font-semibold text-sky-400">Home Grid Square</span>
+                  <span className="font-semibold text-sky-400">Power Category & Multiplier</span>
                   <p className="text-slate-400 text-[11px]">
-                    Enter your 4-character Maidenhead grid square (e.g., <code className="text-slate-300">FN31</code>) to calculate distances and plot propagation maps.
+                    <strong>Low Power (100W max)</strong>: 2X multiplier.<br />
+                    <strong>QRP (5W max)</strong>: 5X multiplier (battery/solar) or 2X.<br />
+                    <strong>High Power (&gt;100W PEP)</strong>: 1X multiplier.
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="font-semibold text-sky-400">Home ARRL Section</span>
+                  <span className="font-semibold text-sky-400">Home Grid Locator</span>
                   <p className="text-slate-400 text-[11px]">
-                    Your station's home ARRL section abbreviation (e.g., <code className="text-slate-300">CT</code>, <code className="text-slate-300">STX</code>, <code className="text-slate-300">EPA</code>) for map visualization.
+                    4-character Maidenhead grid square (e.g. <code className="text-slate-300">FN31</code>) used to compute QSO vector distances and plot propagation origin.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                  <span className="font-semibold text-sky-400">Home ARRL Section & Attendance</span>
+                  <p className="text-slate-400 text-[11px]">
+                    Home section abbreviation (e.g. <code className="text-slate-300">CT</code>, <code className="text-slate-300">MDC</code>) and physical sign-in head count for computing the Operator Participation Index %.
                   </p>
                 </div>
               </div>
@@ -251,16 +266,19 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           {/* Tab 4: Bonus Points */}
           {activeTab === 'bonuses' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Configuring Field Day Bonus Points</h3>
+              <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Class-Filtered Bonus Points Checklist</h3>
 
-              <p className="text-slate-400">
-                Standard ARRL Field Day rules grant bonus points for specific public service, safety, and outreach activities. Check each box in the <strong>Field Day Setup & Bonus Checklist</strong> section to include them:
-              </p>
+              <div className="p-3 rounded-lg bg-sky-500/10 border border-sky-500/20 text-[11px] text-sky-300 flex items-center gap-2">
+                <CheckSquare className="w-4 h-4 text-sky-400 flex-shrink-0" />
+                <span>
+                  <strong>Dynamic Rule Filtering:</strong> The bonus checklist in the Setup Form automatically hides options that are unavailable for your active Entry Class (e.g., Safety Officer is Class A only; 100% Emergency Power is excluded for Class D).
+                </span>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                 <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
                   <span className="text-slate-200 font-medium">100% Emergency Power</span>
-                  <span className="text-sky-400 font-mono font-bold">+100 pts / transmitter</span>
+                  <span className="text-sky-400 font-mono font-bold">+100 pts / TX (max 2,000)</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
                   <span className="text-slate-200 font-medium">Media Publicity</span>
@@ -275,28 +293,60 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                   <span className="text-sky-400 font-mono font-bold">+100 pts</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
-                  <span className="text-slate-200 font-medium">NTS Messages Originated/Relayed</span>
-                  <span className="text-sky-400 font-mono font-bold">+10 pts / message</span>
+                  <span className="text-slate-200 font-medium">Message to ARRL SM / SEC</span>
+                  <span className="text-sky-400 font-mono font-bold">+100 pts</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-200 font-medium">NTS / ICS-213 Messages</span>
+                  <span className="text-sky-400 font-mono font-bold">+10 pts / msg (max 100)</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
                   <span className="text-slate-200 font-medium">W1AW Bulletin Received</span>
                   <span className="text-sky-400 font-mono font-bold">+100 pts</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
-                  <span className="text-slate-200 font-medium">Educational Activity Completed</span>
+                  <span className="text-slate-200 font-medium">Satellite QSO Completed</span>
                   <span className="text-sky-400 font-mono font-bold">+100 pts</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
-                  <span className="text-slate-200 font-medium">Safety Officer Appointed</span>
+                  <span className="text-slate-200 font-medium">Natural Power (&ge;5 QSOs)</span>
                   <span className="text-sky-400 font-mono font-bold">+100 pts</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
-                  <span className="text-slate-200 font-medium">Web Submission Completed</span>
+                  <span className="text-slate-200 font-medium">Educational Activity</span>
+                  <span className="text-sky-400 font-mono font-bold">+100 pts</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-200 font-medium">Elected Official Visit</span>
+                  <span className="text-sky-400 font-mono font-bold">+100 pts</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-200 font-medium">Served Agency Visit</span>
+                  <span className="text-sky-400 font-mono font-bold">+100 pts</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-200 font-medium">Youth Element Bonus</span>
+                  <span className="text-sky-400 font-mono font-bold">+20 pts / youth (max 100)</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-200 font-medium">GOTA Coach Bonus</span>
+                  <span className="text-sky-400 font-mono font-bold">+100 pts (&ge;10 GOTA QSOs)</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-200 font-medium">Web App Submission</span>
                   <span className="text-sky-400 font-mono font-bold">+50 pts</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
-                  <span className="text-slate-200 font-medium">Youth QSOs Bonus</span>
-                  <span className="text-sky-400 font-mono font-bold">+20 pts / youth QSO</span>
+                  <span className="text-slate-200 font-medium">Social Media Promotion</span>
+                  <span className="text-sky-400 font-mono font-bold">+100 pts</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-200 font-medium">Safety Officer Bonus (Class A)</span>
+                  <span className="text-sky-400 font-mono font-bold">+100 pts</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-200 font-medium">Site Responsibilities Checklist</span>
+                  <span className="text-sky-400 font-mono font-bold">+50 pts (non-Class A)</span>
                 </div>
               </div>
             </div>
@@ -305,28 +355,38 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           {/* Tab 5: Analytics & PDF */}
           {activeTab === 'export' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Analytics & Printing PDF Reports</h3>
+              <h3 className="text-sm font-bold text-slate-100 border-b border-slate-800 pb-2">Analytics & PDF Summary Reports</h3>
 
               <div className="space-y-3">
                 <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
                   <h4 className="font-semibold text-slate-200 flex items-center gap-2">
                     <BarChart2 className="w-4 h-4 text-sky-400" />
-                    Operations Dashboard
+                    Operations Dashboard & Analytics
                   </h4>
                   <p className="text-slate-400 text-[11px]">
-                    Scroll down the <strong>Operations Dashboard</strong> tab to view QSO breakdowns by band and mode, operator leaderboard rankings, hourly rate charts, interactive DX distance vector maps, and ARRL section coverage maps.
+                    The <strong>Operations Dashboard</strong> tab provides real-time scoring totals with separate Main Station & GOTA point breakdowns, mode/band distribution charts, operator leaderboards, hourly rate velocity charts, interactive DX distance vector maps, and ARRL section sweep progress (86 sections).
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
                   <h4 className="font-semibold text-slate-200 flex items-center gap-2">
-                    <FileDown className="w-4 h-4 text-sky-400" />
-                    Printing & Saving PDF Reports
+                    <ListFilter className="w-4 h-4 text-sky-400" />
+                    Interactive QSO Log Grid
                   </h4>
                   <p className="text-slate-400 text-[11px]">
-                    1. Click <strong>Print Report Preview</strong> in the navigation sub-bar to review the formatted summary report layout.<br />
+                    Scroll to the bottom of the Operations Dashboard to inspect all loaded QSO records. Use quick filters for band (160m–6m, Satellite) and mode (CW, Phone, Digital), or search by callsign, operator, section, or frequency.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+                  <h4 className="font-semibold text-slate-200 flex items-center gap-2">
+                    <Printer className="w-4 h-4 text-amber-400" />
+                    Printing & Saving PDF Submission Reports
+                  </h4>
+                  <p className="text-slate-400 text-[11px]">
+                    1. Switch to <strong>Print Report Preview</strong> in the navigation bar to preview formatted multi-page summary report pages.<br />
                     2. Click the blue <strong>Download PDF Report</strong> button in the top header bar.<br />
-                    3. Your browser's native print dialog will open where you can select <strong>Save as PDF</strong> or print a physical copy.
+                    3. Your browser's native print dialog will open where you can select <strong>Save as PDF</strong> or print physical copies for club records.
                   </p>
                 </div>
               </div>
@@ -374,3 +434,4 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
     </div>
   );
 };
+
